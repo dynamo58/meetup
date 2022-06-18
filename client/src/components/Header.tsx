@@ -39,8 +39,9 @@ const Header: React.FC = () => {
 			as="nav"
 			width="100%"
 			justify="space-between"
-			maxHeight="4em"
+			maxHeight="3.5em"
 			align="center"
+			fontSize="1.1em"
 		>
 			<HeaderSection>
 				{/*  */}

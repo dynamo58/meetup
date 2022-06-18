@@ -16,6 +16,7 @@ import {
 
 import { SocketContext } from "./Context";
 import Header from "./components/Header";
+import Video from "./components/Video";
 import { PulseIcon } from "./components/Icons";
 
 
@@ -44,7 +45,7 @@ const App: FC = () => {
               onChange={(e) => setName(e.target.value)}
             />
 
-            <Button onClick={onCopy} w="8em">
+            <Button onClick={onCopy} w="8em" bg={ hasCopied ?  "accent_primary" : undefined }>
               {hasCopied ? (
                 <Text>Copied</Text>
               ) : (
@@ -67,7 +68,7 @@ const App: FC = () => {
             {callAccepted && !callEnded ? (
             <Button onClick={leaveCall} bg="is_error" w="8em">Close call</Button>
             ) : (
-              <Button onClick={() => callUser(idToCall)} bg="is_success" w="8em">Call user</Button>
+              <Button onClick={() => callUser(idToCall)} w="8em">Call user</Button>
             )}
           </Stack>
         </FormControl>
@@ -77,34 +78,32 @@ const App: FC = () => {
         direction={{ base: "column", md: "row" }}
       >
         {stream && (
-          <div>
-            <p>You</p>
-            <video
-              playsInline
-              muted
-              ref={ownVideo}
-              autoPlay
-            ></video>
-          </div>
+          <Video 
+            ref={ ownVideo }
+            name="You"
+            mute={ true }
+          />
         )}
 
         {callAccepted && !callEnded && (
-          <div>
-            <p>{call ? call.name : "Other person"}</p>
-            <video
-              ref={userVideo}
-              autoPlay
-              controls
-            ></video>
-          </div>
+          <Video 
+            ref={ userVideo }
+            name={ call?.name ? call.name : "[no name]" }
+            mute={ false }
+          />
         )}
       </Stack>
         
       {call?.isReceivingCall && !callAccepted && (
         <>
           <PulseIcon />
-          <Text>{call!.name} is calling</Text>
-          <Button onClick={answerCall}>Pick up</Button>
+          <Text>
+            <Text fontWeight="650" display="inline-block">
+              {call.name ? call.name : "[no name]"}
+            </Text>
+              { " is calling" }
+          </Text>
+          <Button onClick={answerCall} bg="accent_primary">Pick up</Button>
         </>
       )}
     </Stack>

@@ -53,7 +53,6 @@ const ContextProvider = (props: PropsWithChildren) => {
 			setSocketId(id);
 		});
 		socket.on("callUser", ({ from, name: callerName, signal }) => {
-			console.log("call recieved");
 			setCall({
 				isReceivingCall: true,
 				from,
@@ -85,8 +84,6 @@ const ContextProvider = (props: PropsWithChildren) => {
 	};
 
 	const callUser = (id: string) => {
-		console.log("Calling user with id:", id);
-
 		const peer = new Peer({
 			initiator: true,
 			trickle: false,
