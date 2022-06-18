@@ -1,112 +1,113 @@
 import { useContext, FC, useState } from "react";
-import { SocketContext } from "./Context";
 import {
   FormControl,
-  FormLabel,
   Input,
   Button,
   Stack,
-  useColorMode,
-  Flex,
   Text,
-  useClipboard
+  useClipboard,
+  Divider,
+  Icon
 } from "@chakra-ui/react";
+
+import {
+  CopyIcon
+} from "@chakra-ui/icons";
+
+import { SocketContext } from "./Context";
+import Header from "./components/Header";
+import { PulseIcon } from "./components/Icons";
 
 
 const App: FC = () => {
   let { socketId, callAccepted, callEnded, ownVideo, userVideo, stream, call, setName, leaveCall, callUser, answerCall } = useContext(SocketContext)!;
+
   const [idToCall, setIdToCall] = useState("");
+  const { hasCopied, onCopy } = useClipboard(socketId);
 
-  const { hasCopied, onCopy } = useClipboard(socketId)
-  const { colorMode, toggleColorMode } = useColorMode();
   return (
-      <Stack
-        direction={{ base: "column", md: "column" }}
-        justify="center"
-        alignItems="center"
-      >
-        <Flex
-          as="nav"
-          align="center"
-          justify="center"
-          wrap="wrap"
-          gap={5}
-          padding={6}
-        >
-          <Text>Docs</Text>
-          <Text>Examples</Text>
-          <Button onClick={toggleColorMode}>
-            Toggle {colorMode === "light" ? "Dark" : "Light"}
-          </Button>
-        </Flex>
+    // Guides the page layout all the way down
+    <Stack
+      direction={{ base: "column", md: "column" }}
+      alignItems="center"
+    >
+      <Header />
+      <Divider />
 
-        <Stack direction={{ base: "column", md: "column" }} maxW="20em">
-          <FormControl>
-            <FormLabel htmlFor="name">Your name</FormLabel>
+      <Stack direction={{ base: "column", md: "column" }} maxW="20em">
+        <FormControl>
+          <Stack spacing={4} direction='row' align='center' marginBottom={4} marginTop={50}>
             <Input
               id="name"
               type="text"
-              placeholder="The name your peers to see"
+              placeholder="Your name"
               onChange={(e) => setName(e.target.value)}
             />
 
-            <Button onClick={onCopy}>
-              {hasCopied ? "Copied" : "Copy ID"}
+            <Button onClick={onCopy} w="8em">
+              {hasCopied ? (
+                <Text>Copied</Text>
+              ) : (
+                <>
+                  <CopyIcon m={1} />
+                  <Text>Copy ID</Text>
+                </>
+              )}
             </Button>
+          </Stack>
 
-          </FormControl>
-
-          <br /><br />
-
-          <FormControl>
+          <Stack spacing={4} direction='row' align='center'>
             <Input
               id="otherPerson"
               type="text"
+              placeholder="ID of user to call"
               onChange={(e) => setIdToCall(e.target.value)}
             ></Input>
 
             {callAccepted && !callEnded ? (
-              <Button onClick={leaveCall}>Close call</Button>
+            <Button onClick={leaveCall} bg="is_error" w="8em">Close call</Button>
             ) : (
-              <Button onClick={() => callUser(idToCall)}>Call user</Button>
+              <Button onClick={() => callUser(idToCall)} bg="is_success" w="8em">Call user</Button>
             )}
-          </FormControl>
-        </Stack>
-        
-        <Stack
+          </Stack>
+        </FormControl>
+      </Stack>
+      
+      <Stack
         direction={{ base: "column", md: "row" }}
-        >
-          {stream && (
-            <div>
-              <p>You</p>
-              <video
-                playsInline
-                muted
-                ref={ownVideo}
-                autoPlay
-              ></video>
-            </div>
-          )}
+      >
+        {stream && (
+          <div>
+            <p>You</p>
+            <video
+              playsInline
+              muted
+              ref={ownVideo}
+              autoPlay
+            ></video>
+          </div>
+        )}
 
-          {callAccepted && !callEnded && (
-            <div>
-              <p>{call ? call.name : "Other person"}</p>
-              <video
-                ref={userVideo}
-                autoPlay
-                controls
-              ></video>
-            </div>
-          )}
-        </Stack>
-          
-        {call?.isReceivingCall && !callAccepted && (
-          <>
-            <Text>{call!.name} is calling</Text>
-            <Button onClick={answerCall}>Pick up</Button>
-          </>
+        {callAccepted && !callEnded && (
+          <div>
+            <p>{call ? call.name : "Other person"}</p>
+            <video
+              ref={userVideo}
+              autoPlay
+              controls
+            ></video>
+          </div>
         )}
       </Stack>
+        
+      {call?.isReceivingCall && !callAccepted && (
+        <>
+          <PulseIcon />
+          <Text>{call!.name} is calling</Text>
+          <Button onClick={answerCall}>Pick up</Button>
+        </>
+      )}
+    </Stack>
   );
 }
 

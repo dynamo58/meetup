@@ -4,6 +4,7 @@
   "private": true,
   "proxy": "http://localhost:5000",
   "dependencies": {
+    "@chakra-ui/icons": "^2.0.2",
     "@chakra-ui/react": "^2.2.1",
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
@@ -43,11 +44,11 @@
     ]
   },
   "devDependencies": {
-    "@types/react-copy-to-clipboard": "^5.0.2",
-    "@types/simple-peer": "^9.11.4",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.11.40",
     "@types/react": "^18.0.12",
-    "@types/react-dom": "^18.0.5"
+    "@types/react-copy-to-clipboard": "^5.0.2",
+    "@types/react-dom": "^18.0.5",
+    "@types/simple-peer": "^9.11.4"
   }
 }

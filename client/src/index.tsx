@@ -7,12 +7,12 @@ import theme, { myThemeConfig } from "./styles/theme";
 
 
 ReactDOM.render(
-  <ChakraProvider resetCSS theme={ myThemeConfig }>
-    <ThemeProvider theme={theme}>
+  <ThemeProvider theme={theme}>
+    <ChakraProvider resetCSS theme={ myThemeConfig }>
       <ContextProvider>
         <App />
       </ContextProvider>
-    </ThemeProvider>
-  </ChakraProvider>,
+    </ChakraProvider>
+  </ThemeProvider>,
   document.getElementById("root") as HTMLElement
 );

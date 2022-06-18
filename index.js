@@ -21,18 +21,13 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-	console.log(socket.id);
 	socket.emit("connectRes", socket.id);
 
 	socket.on("disconnect", () => {
-		console.log("dc");
-
 		socket.broadcast.emit("callEnded");
 	});
 
 	socket.on("callUser", ({ userToCall, signalData, from, name }) => {
-		console.log("calluser");
-
 		io.to(userToCall).emit("callUser", {
 			signal: signalData,
 			from, name
@@ -40,8 +35,6 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("answerCall", (data) => {
-		console.log("answercall");
-
 		io.to(data.to).emit("callAccepted", data.signal);
 	});
 });
