@@ -1,12 +1,14 @@
 import React, { createContext, useState, useRef, useEffect, RefObject, PropsWithChildren, MutableRefObject } from "react";
 import { io } from "socket.io-client";
-import Peer, { Instance } from "simple-peer";
+import Peer, { Instance, SignalData } from "simple-peer";
+
+import { ISocketConnectResponse } from "../../shared";
 
 interface Call {
 	isReceivingCall: boolean,
 	from: string,
 	name: string,
-	signal: string,
+	signal: SignalData,
 }
 
 interface ISocketContext {
@@ -28,6 +30,11 @@ const SocketContext = createContext<ISocketContext | undefined>(undefined);
 
 const socket = io("http://localhost:3001");
 
+interface ICallUser {
+	from: string,
+	name: string,
+	signal: SignalData,
+}
 
 const ContextProvider = (props: PropsWithChildren) => {
 	const ownVideo = useRef<HTMLVideoElement>(null);
@@ -49,10 +56,10 @@ const ContextProvider = (props: PropsWithChildren) => {
 			setStream(_stream);
 			ownVideo!.current!.srcObject = _stream;
 		});
-		socket.on("connectRes", (id) => {
-			setSocketId(id);
+		socket.on("connectRes", ({ socketId, uuid}: ISocketConnectResponse) => {
+			setSocketId(socketId);
 		});
-		socket.on("callUser", ({ from, name: callerName, signal }) => {
+		socket.on("callUser", ({ from, name: callerName, signal }: ICallUser) => {
 			setCall({
 				isReceivingCall: true,
 				from,
@@ -72,6 +79,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 		});
 
 		peer.on("signal", (data) => {
+			console.log({data});
 			socket.emit("answerCall", {signal: data, to: call!.from});
 		});
 
@@ -103,7 +111,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 			userVideo!.current!.srcObject = _stream;
 		});
 
-		socket.on("callAccepted", (signal) => {
+		socket.on("callAccepted", (signal: SignalData) => {
 			setCallAccepted(true);
 			peer.signal(signal);
 		});

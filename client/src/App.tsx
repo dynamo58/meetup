@@ -1,4 +1,4 @@
-import { useContext, FC, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   FormControl,
   Input,
@@ -7,20 +7,18 @@ import {
   Text,
   useClipboard,
   Divider,
-  Icon
+  Flex,
+  Center
 } from "@chakra-ui/react";
-
-import {
-  CopyIcon
-} from "@chakra-ui/icons";
 
 import { SocketContext } from "./Context";
 import Header from "./components/Header";
 import Video from "./components/Video";
+import RoomSettings, { RoomRole } from "./components/RoomSettings";
 import { PulseIcon } from "./components/Icons";
 
 
-const App: FC = () => {
+const App: React.FC = () => {
   let { socketId, callAccepted, callEnded, ownVideo, userVideo, stream, call, setName, leaveCall, callUser, answerCall } = useContext(SocketContext)!;
 
   const [idToCall, setIdToCall] = useState("");
@@ -29,13 +27,67 @@ const App: FC = () => {
   return (
     // Guides the page layout all the way down
     <Stack
-      direction={{ base: "column", md: "column" }}
+      direction="column"
       alignItems="center"
     >
       <Header />
       <Divider />
 
-      <Stack direction={{ base: "column", md: "column" }} maxW="20em">
+
+      <Stack
+        direction="row"
+        width="100vw"
+        justifyContent="space"
+      >
+        <Stack
+          position="relative"
+          left={0}
+          height="100%"
+        >
+          <RoomSettings role={RoomRole.Owner} />
+        </Stack>
+        
+        <Divider orientation='vertical' />
+
+        <Stack
+          width="100%"
+          height="100%"
+
+        >
+          <Center>
+            {stream && (
+              <Video
+                ref={ownVideo}
+                name="You"
+                mute={true}
+              />
+            )}
+
+            {callAccepted && !callEnded && (
+              <Video
+                ref={userVideo}
+                name={call?.name ? call.name : "[no name]"}
+                mute={false}
+              />
+            )}
+          </Center>
+
+          {call?.isReceivingCall && !callAccepted && (
+            <>
+              <PulseIcon />
+              <Text>
+                <Text fontWeight="650" display="inline-block">
+                  {call.name ? call.name : "[no name]"}
+                </Text>
+                {" is calling"}
+              </Text>
+              <Button onClick={answerCall} bg="accent_primary">Pick up</Button>
+            </>
+          )}
+        </Stack>
+      </Stack>
+
+      {/* <Stack direction="column" maxW="20em">
         <FormControl>
           <Stack spacing={4} direction='row' align='center' marginBottom={4} marginTop={50}>
             <Input
@@ -72,40 +124,7 @@ const App: FC = () => {
             )}
           </Stack>
         </FormControl>
-      </Stack>
-      
-      <Stack
-        direction={{ base: "column", md: "row" }}
-      >
-        {stream && (
-          <Video 
-            ref={ ownVideo }
-            name="You"
-            mute={ true }
-          />
-        )}
-
-        {callAccepted && !callEnded && (
-          <Video 
-            ref={ userVideo }
-            name={ call?.name ? call.name : "[no name]" }
-            mute={ false }
-          />
-        )}
-      </Stack>
-        
-      {call?.isReceivingCall && !callAccepted && (
-        <>
-          <PulseIcon />
-          <Text>
-            <Text fontWeight="650" display="inline-block">
-              {call.name ? call.name : "[no name]"}
-            </Text>
-              { " is calling" }
-          </Text>
-          <Button onClick={answerCall} bg="accent_primary">Pick up</Button>
-        </>
-      )}
+      </Stack> */}
     </Stack>
   );
 }

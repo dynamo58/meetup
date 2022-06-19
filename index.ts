@@ -1,9 +1,12 @@
 const PORT = process.env.PORT || 3001;
 
 import express from "express";
-import http from "http";
-import { Server as SocketIOServer } from "socket.io";
-import cors from "cors";
+import * as http from "http"
+import { Server as SocketIOServer, Socket } from "socket.io";
+import cors, {} from "cors";
+import { v4 } from "uuid";
+
+import { ISocketConnectResponse, ICallUserData, ICallUserResponse } from "./shared";
 
 const app = express();
 const server = http.createServer(app);
@@ -16,22 +19,32 @@ const io = new SocketIOServer(server, {
 
 app.use(cors());
 
-app.get("/", (req, res) => {
-	res.send("xd");
-});
+interface Room {
+	participants: Socket[],
+	owner: Socket[],
+	name: string,
+	uuid: string,
+	password: string,
+}
+
+const _rooms = new Array<Room>();
 
 io.on("connection", (socket) => {
-	socket.emit("connectRes", socket.id);
+	socket.emit("connectRes", {
+		socketId: socket.id,
+		uuid: v4(),
+	} as ISocketConnectResponse);
 
 	socket.on("disconnect", () => {
 		socket.broadcast.emit("callEnded");
 	});
 
-	socket.on("callUser", ({ userToCall, signalData, from, name }) => {
+	socket.on("callUser", ({ userToCall, signalData, from, name }: ICallUserData) => {
 		io.to(userToCall).emit("callUser", {
 			signal: signalData,
-			from, name
-		});
+			from,
+			name
+		} as ICallUserResponse);
 	});
 
 	socket.on("answerCall", (data) => {
