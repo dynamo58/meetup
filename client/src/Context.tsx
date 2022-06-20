@@ -2,7 +2,7 @@ import React, { createContext, useState, useRef, useEffect, RefObject, PropsWith
 import { io } from "socket.io-client";
 import Peer, { Instance, SignalData } from "simple-peer";
 
-import { ISocketConnectResponse } from "../../shared";
+import { ISocketConnectResponse } from "../../shared/shared";
 
 interface Call {
 	isReceivingCall: boolean,

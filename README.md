@@ -1,14 +1,13 @@
 # Meetup
 
-A simple P2P secure open video calling service
+A simple P2P secure video conferencing app.
 
 
 <div align="center">
-	<img src="icon.webp"></img>
+	<img src="client/public/favicon.webp"></img>
 </div>
 
 ### The stack
-**Node.js**
 * React
 	- Chakra UI (UI library)
 * simple-peer (implementation for WebRTC)

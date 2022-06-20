@@ -6,7 +6,7 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import cors, {} from "cors";
 import { v4 } from "uuid";
 
-import { ISocketConnectResponse, ICallUserData, ICallUserResponse } from "./shared";
+import { ISocketConnectResponse, ICallUserData, ICallUserResponse } from "../shared/shared";
 
 const app = express();
 const server = http.createServer(app);
