@@ -56,7 +56,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 			setStream(_stream);
 			ownVideo!.current!.srcObject = _stream;
 		});
-		socket.on("connectRes", ({ socketId, uuid}: ISocketConnectResponse) => {
+		socket.on("connectRes", ({ socketId }: ISocketConnectResponse) => {
 			setSocketId(socketId);
 		});
 		socket.on("callUser", ({ from, name: callerName, signal }: ICallUser) => {
@@ -80,7 +80,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 		peer.on("signal", (data) => {
 			console.log({data});
-			socket.emit("answerCall", {signal: data, to: call!.from});
+			socket.emit("answerCall", { signal: data, to: call!.from });
 		});
 
 		peer.on("stream", (_stream) => {
