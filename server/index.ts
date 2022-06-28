@@ -1,4 +1,11 @@
 const PORT = process.env.PORT || 3001;
+const IS_DEBUG_MODE = process.env.DEBUG_MODE === "1";
+
+const dbg = (a: any) => {
+	if (IS_DEBUG_MODE)
+		console.log(a)
+}
+
 
 import express from "express";
 import * as http from "http"
@@ -7,16 +14,19 @@ import cors, {} from "cors";
 import { v4 } from "uuid";
 
 
+
 import {
 	UUID,
-	ISocketConnectResponse,
+	ISocketConnectRes,
 	IUserDisconnectedData,
-	IMakeRoomData,
-	IMakeRoomResponse,
-	IDeleteRoomResponse,
-	IRoomEditedResponse,
+	ICreateRoomData,
+	ICreateRoomRes,
+	IDeleteRoomRes,
+	IRoomEditedRes,
 	IJoinRoomData,
-	IJoinRoomRes
+	IJoinRoomRes,
+	ICallUserData,
+	IUserIsCallingData
 } from "../shared/shared";
 
 const app = express();
@@ -45,35 +55,41 @@ interface UserRoomLookup {
 const _rooms = new Map<UUID, Room>();
 
 io.on("connection", (socket) => {
+	dbg(`New user connected | id: ${socket.id}`)
 	let info: UserRoomLookup | null = null;
 	
-	socket.emit("connectRes", {
+	socket.emit("connectionRes", {
 		socketId: socket.id,
-	} as ISocketConnectResponse);
+	} as ISocketConnectRes);
 
 	// SOCKET LISTENERS
 
-	socket.on("makeRoom", (data: IMakeRoomData) => { 
+	socket.on("createRoom", (data: ICreateRoomData) => {
+		dbg(`User ${socket.id} has requested to make a room`);
+
 		const _uuid = v4();
 		_rooms.set(_uuid, {
 			participants: [],
 			owner: socket,
 			name: data.roomName,
-			password: data._roomPassword
+			password: data.roomPassword
 		});
+		dbg(`A new room  (${info?.uuid} -- ${data.roomName}) was created`);
 
 		info = {
 			uuid: _uuid,
 			isOwner: true,
 		}
 
-		socket.emit("makeRoomResponse", {
+		socket.emit("createRoomRes", {
 			isSuccess: true,
 			roomUuid: _uuid,
-		} as IMakeRoomResponse);
+		} as ICreateRoomRes);
 	});
 
-	socket.on("editRoom", (data: IMakeRoomData) => {
+	socket.on("editRoom", (data: ICreateRoomData) => {
+		dbg(`User ${socket.id} has requested to edit room (${info?.uuid} -- ${data.roomName})`);
+
 		if (info?.isOwner) {
 			const current = _rooms.get(info!.uuid);
 
@@ -81,12 +97,15 @@ io.on("connection", (socket) => {
 				participants: current!.participants,
 				owner:        current!.owner,
 				name:         data.roomName,
-				password:     data._roomPassword
+				password:     data.roomPassword
 			});
+
+			dbg(`Room  (${info?.uuid} -- ${data.roomName}) was changed. (new name ${data.roomName})`);
+
 
 			socket.emit("editRoomRes", {
 				isSuccess: true,
-			} as IRoomEditedResponse);
+			} as IRoomEditedRes);
 
 
 			if (data.roomName !== current!.name)
@@ -96,16 +115,17 @@ io.on("connection", (socket) => {
 			socket.emit("editRoomRes", {
 				isSuccess: false,
 				errorMessage: "You are not the owner of this room!",
-			} as IRoomEditedResponse);
+			} as IRoomEditedRes);
 
 		_rooms.delete(info!.uuid);
 	});
 
 	socket.on("deleteRoom", () => {
+		dbg!(`A user has requested to delete room (${info?.uuid})`)
 		if (info?.isOwner) {
 			socket.emit("deleteRoomRes", {
 				isSuccess: true,
-			} as IDeleteRoomResponse);
+			} as IDeleteRoomRes);
 
 			socket.broadcast.emit("roomDeleted");
 			
@@ -114,11 +134,13 @@ io.on("connection", (socket) => {
 			socket.emit("deleteRoomRes", {
 				isSuccess: false,
 				errorMessage: "You are not the owner of this room!",
-			} as IDeleteRoomResponse);
+			} as IDeleteRoomRes);
 		}
 	});
 
 	socket.on("joinRoom", (data: IJoinRoomData) => {
+		dbg(`A user has requested to join a room ${data.roomUUID}`);
+
 		const room_ref = _rooms.get(data.roomUUID);
 
 		let isSuccess: boolean = false;
@@ -135,14 +157,21 @@ io.on("connection", (socket) => {
 			errorMesage,
 			peerSocketIds: roomSocketIds,
 		} as IJoinRoomRes);
+	});
 
+	socket.on("callUser", (data: ICallUserData) => {
+		dbg(`A user ${socket.id} is calling ${data.userToCallUUID}`);
 
-		
-		if (isSuccess) {}
-			
+		io.to(data.userToCallUUID).emit("userIsCalling", {
+			signalData: data.signalData,
+			callerName: data.name,
+			callerSocketId: socket.id,
+		} as IUserIsCallingData);
 	});
 
 	socket.on("disconnect", () => {
+		dbg(`A user ${socket.id} has disconnected`);
+
 		socket.broadcast.emit("userDisconnected", {
 			userSocketId: socket.id,
 		} as IUserDisconnectedData);

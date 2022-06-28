@@ -1,4 +1,5 @@
 import React, { PropsWithChildren } from "react";
+import { Link } from "react-router-dom";
 
 import {
 	Flex,
@@ -47,8 +48,9 @@ const Header: React.FC = () => {
 				{/*  */}
 			</HeaderSection>
 			<HeaderSection>
-				<Text>Public rooms</Text>
-				<Text>About</Text>
+				<Link to="/rooms">Public rooms</Link>
+				<Link to="/">Home</Link>
+				<a href="https://github.com/dynamo58/meetup" target="_blank">Check code on GitHub</a>
 			</HeaderSection>
 			<HeaderSection>
 				<Button onClick={toggleColorMode}>

@@ -2,7 +2,7 @@ import React, {} from "react";
 
 interface VideoProps {
 	name: string,
-	mute: boolean, 
+	mute: boolean,
 }
 
 const Video = React.forwardRef<HTMLVideoElement, VideoProps>((props, ref) => {

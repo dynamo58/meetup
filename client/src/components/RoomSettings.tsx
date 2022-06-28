@@ -13,11 +13,6 @@ import {
 	Center
 } from '@chakra-ui/react'
 
-import {
-	ShowIcon,
-	HideIcon,
-} from "./Icons";
-
 export enum RoomRole {
 	Participant,
 	Owner,
