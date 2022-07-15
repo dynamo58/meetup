@@ -1,13 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 import {
 	Stack,
-	Divider,
 	Center,
 	Text,
 	Button,
 	Input,
 } from "@chakra-ui/react";
-
 import { SocketContext } from "../Context";
 
 const Room: React.FC = () => {
@@ -15,12 +13,12 @@ const Room: React.FC = () => {
 
 	useEffect(() => {
 		getRooms(); 
-	}, [])
+	}, [getRooms])
 
 	return (
 		<Center height={"100%"} flexGrow={"2"}>
 			<Stack direction="column" maxW="30em" borderRadius="5px">
-				{rooms?.rooms.length == 0 ? (
+				{rooms?.rooms.length === 0 ? (
 					<Text>No rooms are currently up, create one!</Text>
 				) : (
 					rooms?.rooms.map((r) => {

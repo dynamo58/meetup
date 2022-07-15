@@ -21,7 +21,8 @@ import {
 	IGetRoomsRes,
 	RoomGist,
 	IAnswerCallData,
-	ICallAcceptedData
+	ICallAcceptedData,
+	IRoomEdited
 } from "../shared/shared";
 
 
@@ -55,6 +56,11 @@ interface UserRoomLookup {
 }
 
 const _rooms = new Map<UUID, Room>();
+
+const getOtherSocketIdsInRoom = (roomUUID : UUID, ownId: UUID) => {
+	let lookup = _rooms.get(roomUUID)!;
+	return [lookup.owner.id, ...lookup.participants.map((p) => {p.id})].filter((i) => i !== ownId);
+}
 
 io.on("connection", (socket) => {
 	dbg(`New user connected | id: ${socket.id}`)
@@ -110,32 +116,35 @@ io.on("connection", (socket) => {
 	socket.on("editRoom", (data: ICreateRoomData) => {
 		dbg(`User ${socket.id} has requested to edit room (${info?.uuid} -- ${data.roomName})`);
 
-		if (info?.isOwner) {
-			const current = _rooms.get(info!.uuid);
-
-			_rooms.set(info!.uuid, {
-				participants: current!.participants,
-				owner:        current!.owner,
-				name:         data.roomName,
-				password:     data.roomPassword
-			});
-
-			dbg(`Room  (${info?.uuid} -- ${data.roomName}) was changed. (new name ${data.roomName})`);
-
-
-			socket.emit("editRoomRes", {
-				isSuccess: true,
-			} as IEditRoomRes);
-
-
-			if (data.roomName !== current!.name)
-				socket.broadcast.emit("roomEdited", { newName: data.roomName });
-			
-		} else
+		if (!info || !info?.isOwner) {
 			socket.emit("editRoomRes", {
 				isSuccess: false,
 				errorMessage: "You are not the owner of this room!",
 			} as IEditRoomRes);
+			return;
+		}
+
+		const current = _rooms.get(info!.uuid);
+
+		_rooms.set(info!.uuid, {
+			participants: current!.participants,
+			owner:        current!.owner,
+			name:         data.roomName,
+			password:     data.roomPassword
+		});
+
+		dbg(`Room  (${info?.uuid} -- ${data.roomName}) was changed. (new name ${data.roomName})`);
+
+
+		socket.emit("editRoomRes", {
+			isSuccess: true,
+		} as IEditRoomRes);
+
+
+		if (data.roomName !== current!.name)
+			for (let id of Array.from(getOtherSocketIdsInRoom(info?.uuid, socket.id)))
+				io.to(id!).emit("roomEdited", { roomName: data.roomName } as IRoomEdited);
+			
 
 		_rooms.delete(info!.uuid);
 	});
@@ -166,7 +175,7 @@ io.on("connection", (socket) => {
 		let isSuccess: boolean = false;
 		let errorMesage: string | undefined = "The room was not found or password did not match";
 		let roomSocketIds: string[] | undefined = undefined;
-		if (room_ref?.password === data.roomPassword) {
+		if (room_ref?.password === data.roomPassword || room_ref?.password === "") {
 			roomSocketIds = [room_ref.owner.id, ...room_ref.participants.map((s) => s.id)];
 			isSuccess = true;
 			errorMesage = undefined;
@@ -204,7 +213,12 @@ io.on("connection", (socket) => {
 		// if (info) {
 		// 	const room = _rooms.get(info?.uuid);
 
+		// 	 if (ro// if (info) {
+		// 	const room = _rooms.get(info?.uuid);
+
 		// 	 if (room?.participants.length === 0 &&  info.isOwner)
+		// 	 	_rooms.delete(info.uuid);
+		// }om?.participants.length === 0 &&  info.isOwner)
 		// 	 	_rooms.delete(info.uuid);
 		// }
 

@@ -40,20 +40,21 @@ const Header: React.FC = () => {
 			as="nav"
 			width="100%"
 			justify="space-between"
-			maxHeight="3.5em"
+			maxHeight="3em"
 			align="center"
 			fontSize="1.1em"
+			bg={colorMode == "light" ? "bgAlt_lm" : "bgAlt_dm"}
 		>
 			<HeaderSection>
 				{/*  */}
 			</HeaderSection>
 			<HeaderSection>
-				<Link to="/rooms">ROOMS</Link>
-				<Link to="/">HOME</Link>
-				<a href="https://github.com/dynamo58/meetup" target="_blank">GITHUB</a>
+				<Link to="/rooms" style={{ padding: "1em 0.5em 1em 0.5em" }}>ROOMS</Link>
+				<Link to="/" style={{ padding: "1em 0.5em 1em 0.5em" }}>HOME</Link>
+				<a href="https://github.com/dynamo58/meetup" target="_blank" style={{ padding: "1em 0.5em 1em 0.5em" }}>GITHUB</a>
 			</HeaderSection>
 			<HeaderSection>
-				<Button onClick={toggleColorMode}>
+				<Button onClick={toggleColorMode} variant={"secondary"}>
 					{colorMode === "light" ? <MoonIcon /> : <SunIcon />}
 				</Button>
 			</HeaderSection>

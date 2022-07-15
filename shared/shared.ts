@@ -72,3 +72,7 @@ export interface IGetRoomsRes {
 export interface ICallAcceptedData {
 	signalData: any,
 }
+
+export interface IRoomEdited {
+	roomName: string,
+}
