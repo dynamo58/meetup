@@ -24,7 +24,7 @@ export interface IDeleteRoomRes {
 	errorMessage?: string,
 };
 
-export interface IRoomEditedRes {
+export interface IEditRoomRes {
 	isSuccess: boolean,
 	errorMessage?: string,
 };
@@ -37,7 +37,7 @@ export interface IJoinRoomData {
 
 export interface IJoinRoomRes {
 	isSuccess: true,
-	errorMesage?: string,
+	errorMessage?: string,
 	peerSocketIds: string[]
 };
 
@@ -57,3 +57,18 @@ export interface IAnswerCallData {
 	endpointSocketId: string,
 	signalData: any,
 };
+
+export interface RoomGist {
+	name: string,
+	uuid: string,
+	activeCallersNum: number,
+	has_password: boolean,
+}
+
+export interface IGetRoomsRes {
+	rooms: RoomGist[],
+};
+
+export interface ICallAcceptedData {
+	signalData: any,
+}

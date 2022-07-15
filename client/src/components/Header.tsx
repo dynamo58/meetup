@@ -48,9 +48,9 @@ const Header: React.FC = () => {
 				{/*  */}
 			</HeaderSection>
 			<HeaderSection>
-				<Link to="/rooms">Public rooms</Link>
-				<Link to="/">Home</Link>
-				<a href="https://github.com/dynamo58/meetup" target="_blank">Check code on GitHub</a>
+				<Link to="/rooms">ROOMS</Link>
+				<Link to="/">HOME</Link>
+				<a href="https://github.com/dynamo58/meetup" target="_blank">GITHUB</a>
 			</HeaderSection>
 			<HeaderSection>
 				<Button onClick={toggleColorMode}>

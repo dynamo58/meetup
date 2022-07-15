@@ -1,19 +1,10 @@
 const PORT = process.env.PORT || 3001;
-const IS_DEBUG_MODE = process.env.DEBUG_MODE === "1";
-
-const dbg = (a: any) => {
-	if (IS_DEBUG_MODE)
-		console.log(a)
-}
-
 
 import express from "express";
 import * as http from "http"
 import { Server as SocketIOServer, Socket } from "socket.io";
 import cors, {} from "cors";
 import { v4 } from "uuid";
-
-
 
 import {
 	UUID,
@@ -22,12 +13,23 @@ import {
 	ICreateRoomData,
 	ICreateRoomRes,
 	IDeleteRoomRes,
-	IRoomEditedRes,
+	IEditRoomRes,
 	IJoinRoomData,
 	IJoinRoomRes,
 	ICallUserData,
-	IUserIsCallingData
+	IUserIsCallingData,
+	IGetRoomsRes,
+	RoomGist,
+	IAnswerCallData,
+	ICallAcceptedData
 } from "../shared/shared";
+
+
+const IS_DEBUG_MODE = process.env.DEBUG_MODE === "1";
+const dbg = (a: any) => {
+	if (IS_DEBUG_MODE)
+		process.stdout.write(`${a}\n`)
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -64,6 +66,23 @@ io.on("connection", (socket) => {
 
 	// SOCKET LISTENERS
 
+	socket.on("getRooms", () => {
+		let rooms_arr = [];
+
+		for (let entry of Array.from(_rooms.entries())) {
+			rooms_arr.push({
+				uuid: entry[0],
+				name: entry[1].name,
+				activeCallersNum: entry[1].participants.length+1,
+				has_password: entry[1].password !== ""
+			} as RoomGist);
+		};
+
+		socket.emit("getRoomsRes", {
+			rooms: rooms_arr,
+		} as IGetRoomsRes);
+	});
+
 	socket.on("createRoom", (data: ICreateRoomData) => {
 		dbg(`User ${socket.id} has requested to make a room`);
 
@@ -72,10 +91,9 @@ io.on("connection", (socket) => {
 			participants: [],
 			owner: socket,
 			name: data.roomName,
-			password: data.roomPassword
+			password: data.roomPassword,
 		});
-		dbg(`A new room  (${info?.uuid} -- ${data.roomName}) was created`);
-
+		
 		info = {
 			uuid: _uuid,
 			isOwner: true,
@@ -85,6 +103,8 @@ io.on("connection", (socket) => {
 			isSuccess: true,
 			roomUuid: _uuid,
 		} as ICreateRoomRes);
+
+		dbg(`A new room  (${info?.uuid} -- ${data.roomName}) was created`);
 	});
 
 	socket.on("editRoom", (data: ICreateRoomData) => {
@@ -105,7 +125,7 @@ io.on("connection", (socket) => {
 
 			socket.emit("editRoomRes", {
 				isSuccess: true,
-			} as IRoomEditedRes);
+			} as IEditRoomRes);
 
 
 			if (data.roomName !== current!.name)
@@ -115,13 +135,13 @@ io.on("connection", (socket) => {
 			socket.emit("editRoomRes", {
 				isSuccess: false,
 				errorMessage: "You are not the owner of this room!",
-			} as IRoomEditedRes);
+			} as IEditRoomRes);
 
 		_rooms.delete(info!.uuid);
 	});
 
 	socket.on("deleteRoom", () => {
-		dbg!(`A user has requested to delete room (${info?.uuid})`)
+		dbg!(`User ${socket.id}  has requested to delete room (${info?.uuid})`)
 		if (info?.isOwner) {
 			socket.emit("deleteRoomRes", {
 				isSuccess: true,
@@ -139,12 +159,12 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("joinRoom", (data: IJoinRoomData) => {
-		dbg(`A user has requested to join a room ${data.roomUUID}`);
+		dbg(`User ${socket.id} has requested to join a room ${data.roomUUID}`);
 
 		const room_ref = _rooms.get(data.roomUUID);
 
 		let isSuccess: boolean = false;
-		let errorMesage: string | undefined = "The room not found or password did not match";
+		let errorMesage: string | undefined = "The room was not found or password did not match";
 		let roomSocketIds: string[] | undefined = undefined;
 		if (room_ref?.password === data.roomPassword) {
 			roomSocketIds = [room_ref.owner.id, ...room_ref.participants.map((s) => s.id)];
@@ -160,7 +180,7 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("callUser", (data: ICallUserData) => {
-		dbg(`A user ${socket.id} is calling ${data.userToCallUUID}`);
+		dbg(`User ${socket.id} is calling ${data.userToCallUUID}`);
 
 		io.to(data.userToCallUUID).emit("userIsCalling", {
 			signalData: data.signalData,
@@ -169,8 +189,24 @@ io.on("connection", (socket) => {
 		} as IUserIsCallingData);
 	});
 
+	socket.on("answerCall", (data: IAnswerCallData) => {
+		dbg(`User ${socket.id} is answering the call from ${data.endpointSocketId}`);
+
+		io.to(data.endpointSocketId).emit("callAccepted", {
+			signalData: data.signalData,
+		} as ICallAcceptedData);
+	});
+
 	socket.on("disconnect", () => {
-		dbg(`A user ${socket.id} has disconnected`);
+		dbg(`User ${socket.id} has disconnected`);
+
+
+		// if (info) {
+		// 	const room = _rooms.get(info?.uuid);
+
+		// 	 if (room?.participants.length === 0 &&  info.isOwner)
+		// 	 	_rooms.delete(info.uuid);
+		// }
 
 		socket.broadcast.emit("userDisconnected", {
 			userSocketId: socket.id,

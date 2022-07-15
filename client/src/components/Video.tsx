@@ -13,7 +13,8 @@ const Video = React.forwardRef<HTMLVideoElement, VideoProps>((props, ref) => {
 				ref={ref}
 				autoPlay
 				muted={props.mute}
-			></video>
+				style={{ maxWidth: "20em", borderRadius: "1em" }}
+			/>
 		</div>
 	)
 });

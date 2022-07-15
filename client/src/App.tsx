@@ -1,26 +1,39 @@
-import React, { useContext, useState } from "react";
+import React, { useEffect, useContext } from "react";
 import {
   Divider,
+  Flex
 } from "@chakra-ui/react";
 
-import { SocketContext } from "./Context";
 import Header from "./components/Header";
 import { Route, Routes } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Room from "./pages/Room";
+import RoomSelector from "./pages/RoomSelector";
+
+import Modal from "./components/Modal";
+
+import { SocketContext } from "./Context";
 
 const App: React.FC = () => {
+  const { initConnection } = useContext(SocketContext)!;
+
+  useEffect(() => {
+    initConnection();
+  }, [])
+
   return (
     <>
-      <Header />
-      <Divider />
-
-      <Routes>
-        <Route path="/"     element={ <Home /> } />
-        <Route path="/room" element={ <Room /> } />
-      </Routes>
-      
+      <Modal/>
+      <Flex flexDir="column" minHeight="100vh">
+        <Header />
+        <Divider />
+        <Routes>
+          <Route path="/"     element={ <Home /> } />
+          <Route path="/rooms" element={<RoomSelector />} />
+          <Route path="/room" element={<Room />} />
+        </Routes>
+      </Flex>
     </>
   );
 }

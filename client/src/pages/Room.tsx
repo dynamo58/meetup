@@ -1,50 +1,71 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import {
 	Stack,
 	Divider,
-	Center
+	useFocusEffect,
 } from "@chakra-ui/react";
 
 import { SocketContext } from "../Context";
 import Video from "../components/Video";
-import RoomSettings, { RoomRole } from "../components/RoomSettings";
+import RoomSettings from "../components/RoomSettings";
 
 const Room: React.FC = () => {
-	let { socketId, callAccepted, callEnded, ownVideo, userVideo, stream, setName, leaveRoom } = useContext(SocketContext)!;
+	let { ownVideoRef, initConnection, roomInfo } = useContext(SocketContext)!;
+
+	useEffect(() => {
+		window.dispatchEvent(new Event("videoInit"));
+	}, [])
+
+	useEffect(() => {
+		Array.from(roomInfo.peers).forEach((p) => {
+			(document.getElementById(p[0])! as HTMLVideoElement).srcObject = p[1].stream;
+		})
+	}, [roomInfo]);
+
 
 	return (
-		<Stack
-			direction="row"
-			width="100vw"
-			justifyContent="space"
-		>
 			<Stack
-				position="relative"
-				left={0}
-				height="100%"
+				direction="row"
+				width="100vw"
+				justifyContent="space"
 			>
-				<RoomSettings role={RoomRole.Owner} />
-			</Stack>
+				<Stack
+					position="relative"
+					left={0}
+					height="100%"
+				>
+					<RoomSettings />
+				</Stack>
 
-			<Divider orientation='vertical' />
+				<Divider orientation='vertical' />
 
-			<Stack
-				width="100%"
-				height="100%"
-
-			>
-				<Center>
-					{stream && (
+				<Stack
+					width="100%"
+					height="100%"
+					direction="column"
+				>
+					<>
 						<Video
-							ref={ownVideo}
+							ref={ownVideoRef}
 							name="You"
 							mute={true}
 						/>
-					)}
-				</Center>
 
+						{
+							Array.from(roomInfo.peers).map((p) =>
+								<video
+									key={p[0]}
+									id={p[0]}
+									muted={false}
+									autoPlay={true}
+									controls={true}
+									style={{maxWidth: "20em", borderRadius: "1em"}}
+								/>
+							)
+						}
+					</>
+				</Stack>
 			</Stack>
-		</Stack>
 	)
 }
 

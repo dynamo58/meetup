@@ -3,60 +3,72 @@ import React, { useContext } from "react";
 import {
 	Stack,
 	Text,
-	Table,
-	Tbody,
-	Tr,
-	Td,
-	TableContainer,
 	Input,
 	Button,
 	Center,
-	FormControl
+	Image,
 } from '@chakra-ui/react'
 
 import {
 	SocketContext
 } from "../Context";
+import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
 	let { joinRoom, createRoom } = useContext(SocketContext)!;
+	
+	const navigate = useNavigate();
 
+	function navigate_promise() {
+		return new Promise(function (resolve, reject) {
+			resolve(navigate("/room", { replace: true }))
+		})
+	}
+	
 	return (
-		<Center>
+		<Center height="100%" flexGrow={2}>
 			<Stack maxW="20em" spacing={4} direction='column' w="100%">
-				<Text>
-					Hello! You can safely meet up with your peers here.
+				<Text fontSize="1.125rem" fontWeight="bold">
+					Hello! You can meet up safely with your peers here.
 				</Text>
-
+				<Image
+					src="/favicon.webp"
+					maxW={"10em"}
+					alignSelf="center"
+					marginBottom={"5em"}
+				/><br /><br /><br />
 				<Text>
-					... simply connect to a room with its UUID and password (if there is one)
+					... simply connect to a room
 				</Text>
-
-				<FormControl>
+				<Stack display={"flex"} justifyContent={"center"} flexDir={"column"}>
 					<Input
 						id="connect-uuid"
 						type="text"
 						placeholder="Room UUID"
+						autoComplete="off"
 					/>
 					<Input
 						id="connect-password"
 						type="password"
 						placeholder="Room password"
-					/>
-					<Button onClick={() => {
+					/><br />
+					<Button alignSelf={"center"} marginTop={"1em"} onClick={() => {
 						const uuid     = (document.getElementById("connect-uuid")! as HTMLInputElement).value;
 						const password = (document.getElementById("connect-password")! as HTMLInputElement).value;
-						joinRoom(uuid, password);
+
+						navigate_promise().then(() => {
+							joinRoom(uuid, password);
+						});
 					}}>
 						Connect
 					</Button>
-				</FormControl>
+				</Stack>
 
 				<Text>
 					... or create a brand new room here!
 				</Text>
 
-				<FormControl>
+				<Stack display={"flex"} justifyContent={"center"} flexDir={"column"}>
 					<Input
 						id="create-name"
 						type="text"
@@ -67,40 +79,18 @@ const Home: React.FC = () => {
 						type="password"
 						placeholder="Room password (optional)"
 					/>
-					<Button onClick={() => {
-						const uuid = (document.getElementById("create-uuid")! as HTMLInputElement).value;
+					<Button alignSelf={"center"} marginTop={"1em"} onClick={() => {
+						const name = (document.getElementById("create-name")! as HTMLInputElement).value;
 						const password = (document.getElementById("create-password")! as HTMLInputElement).value;
-						createRoom(uuid, password);
+
+						navigate_promise().then(() => {
+							createRoom(name, password);
+						});
 					}}>
 						Create
 					</Button>
-				</FormControl>
-			</Stack>
-			
-
-			
-
-			{/* <FormControl>
-				<Stack spacing={4} direction='row' align='center' marginBottom={4} marginTop={50}>
-					<Input
-						id="name"
-						type="text"
-						placeholder="Your name"
-						onChange={(e) => setName(e.target.value)}
-					/>
-
-					<Button onClick={onCopy} w="8em" bg={hasCopied ? "accent_primary" : undefined}>
-						{hasCopied ? (
-							<Text>Copied</Text>
-						) : (
-							<>
-								<CopyIcon m={1} />
-								<Text>Copy ID</Text>
-							</>
-						)}
-					</Button>
 				</Stack>
-			</FormControl> */}
+			</Stack>
 		</Center>
 	)
 }

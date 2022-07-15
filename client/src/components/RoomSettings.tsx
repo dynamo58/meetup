@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect } from "react";
 
 import {
 	Stack,
@@ -10,28 +10,37 @@ import {
 	TableContainer,
 	Input,
 	Button,
-	Center
+	Center,
+	useClipboard
 } from '@chakra-ui/react'
 
-export enum RoomRole {
-	Participant,
-	Owner,
-}
+import { SocketContext } from "../Context";
 
 interface IRoomSettings {
-	role: RoomRole,
 	ownerName?: string,
 }
 
 const RoomSettings: React.FC<IRoomSettings> = (props) => {
-	const isOwner = props.role === RoomRole.Owner;
-	// const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
 
-	const [roomName, setRoomName] = ["xd", (s: string) => { }];
-	const [roomPassword, setRoomPassword] = ["xd", (s: string) => { }];
+	let { updateRoom, roomInfo } = useContext(SocketContext)!;
+	const { hasCopied, onCopy } = useClipboard(roomInfo.uuid!);
+
+	const updateRoomHandler = () => {
+		const name = (document.getElementById("current-name")! as HTMLInputElement).value;
+		
+		const password_div = document.getElementById("current-password")! as HTMLInputElement;
+		const _password = (password_div).value;
+		password_div.value = "";
+
+		updateRoom(name, _password);
+	}
+
+	useEffect(() => {
+		// (document.getElementById("current-name")! as HTMLInputElement).value = roomInfo.roomName;
+	}, []);
 
 	return (
-		<Stack direction="column" maxW="35em" borderRadius="5px">
+		<Stack direction="column" maxW="30em" borderRadius="5px">
 			<Text fontWeight={800} width="100%" textAlign="center">Room settings</Text>
 			<TableContainer>
 				<Table variant='simple'>
@@ -41,32 +50,44 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 							<Td>You</Td>
 						</Tr>
 						<Tr>
+							<Td>UUID (click to copy)</Td>
+							<Td
+								onClick={onCopy}
+								cursor={"pointer"}
+							>
+								<Text maxW={"10em"}>
+									{roomInfo.uuid ? roomInfo.uuid.slice(0, 10) + "..." : ""}
+								</Text>
+							</Td>
+						</Tr>
+						<Tr>
 							<Td>Room name</Td>
 							<Td>
-								{ isOwner ? (
+								{ roomInfo.isOwner ? (
 									<Input
-										value={ roomName } 
-										onChange={ (e) => setRoomName(e.target.value) }
-									/>) : roomName
+										id="current-name"
+									/>) : roomInfo.roomName
 								}
 							</Td>
 						</Tr>
-						{ isOwner && (
-							<Tr>
-								<Td>Room password</Td>
-								<Td>
-									<Input
-										isDisabled={!isOwner}
-										type="password"
-										value={ roomPassword }
-										onChange={ (e) => setRoomPassword(e.target.value)}
-									/>
-								</Td>
-							</Tr>
-						)}
+					{roomInfo.isOwner && (<>
+						<Tr>
+							<Td>Room password</Td>
+							<Td>
+								<Input
+									id="current-password"
+									isDisabled={!roomInfo.isOwner}
+									type="password"
+								/>
+							</Td>
+						</Tr>
+					</>)}
 					</Tbody>
 				</Table>
 			</TableContainer>
+			<Button alignSelf={"center"}  width={"5em"} onClick={updateRoomHandler}>
+				Apply
+			</Button>
 		</Stack>
 	)
 }
