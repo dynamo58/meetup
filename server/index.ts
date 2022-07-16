@@ -22,8 +22,12 @@ import {
 	RoomGist,
 	IAnswerCallData,
 	ICallAcceptedData,
-	IRoomEdited
+	IRoomEdited,
+	IEditRoomData,
+	IChangeNameData,
+	IChangeNameRes
 } from "../shared/shared";
+import { isNullOrUndefined } from "util";
 
 
 const IS_DEBUG_MODE = process.env.DEBUG_MODE === "1";
@@ -43,28 +47,40 @@ const io = new SocketIOServer(server, {
 
 app.use(cors());
 
+interface User {
+	name: string,
+	socket: Socket,
+}
+
 interface Room {
-	participants: Socket[],
-	owner: Socket,
+	participants: User[],
+	owner: User,
 	name: string,
 	password: string,
 }
 
 interface UserRoomLookup {
+	isConnected: boolean,
 	isOwner: boolean,
 	uuid: UUID,
+	name: string,
 }
 
 const _rooms = new Map<UUID, Room>();
 
 const getOtherSocketIdsInRoom = (roomUUID : UUID, ownId: UUID) => {
 	let lookup = _rooms.get(roomUUID)!;
-	return [lookup.owner.id, ...lookup.participants.map((p) => {p.id})].filter((i) => i !== ownId);
+	return [lookup.owner.socket.id, ...lookup.participants.map((p) => {p.socket.id})].filter((i) => i !== ownId);
 }
 
 io.on("connection", (socket) => {
 	dbg(`New user connected | id: ${socket.id}`)
-	let info: UserRoomLookup | null = null;
+	let info: UserRoomLookup = {
+		isConnected: false,
+		isOwner: false,
+		uuid: "",
+		name: "",
+	};
 	
 	socket.emit("connectionRes", {
 		socketId: socket.id,
@@ -95,7 +111,10 @@ io.on("connection", (socket) => {
 		const _uuid = v4();
 		_rooms.set(_uuid, {
 			participants: [],
-			owner: socket,
+			owner: {
+				socket,
+				name: data.name,
+			},
 			name: data.roomName,
 			password: data.roomPassword,
 		});
@@ -103,6 +122,8 @@ io.on("connection", (socket) => {
 		info = {
 			uuid: _uuid,
 			isOwner: true,
+			name: data.name,
+			isConnected: true,
 		}
 
 		socket.emit("createRoomRes", {
@@ -113,7 +134,7 @@ io.on("connection", (socket) => {
 		dbg(`A new room  (${info?.uuid} -- ${data.roomName}) was created`);
 	});
 
-	socket.on("editRoom", (data: ICreateRoomData) => {
+	socket.on("editRoom", (data: IEditRoomData) => {
 		dbg(`User ${socket.id} has requested to edit room (${info?.uuid} -- ${data.roomName})`);
 
 		if (!info || !info?.isOwner) {
@@ -129,8 +150,8 @@ io.on("connection", (socket) => {
 		_rooms.set(info!.uuid, {
 			participants: current!.participants,
 			owner:        current!.owner,
-			name:         data.roomName,
-			password:     data.roomPassword
+			name:         (data.roomName === null) ? current!.name : data.roomName,
+			password:     (data.roomPassword === null) ? current!.password : data.roomPassword,
 		});
 
 		dbg(`Room  (${info?.uuid} -- ${data.roomName}) was changed. (new name ${data.roomName})`);
@@ -145,7 +166,6 @@ io.on("connection", (socket) => {
 			for (let id of Array.from(getOtherSocketIdsInRoom(info?.uuid, socket.id)))
 				io.to(id!).emit("roomEdited", { roomName: data.roomName } as IRoomEdited);
 			
-
 		_rooms.delete(info!.uuid);
 	});
 
@@ -170,13 +190,13 @@ io.on("connection", (socket) => {
 	socket.on("joinRoom", (data: IJoinRoomData) => {
 		dbg(`User ${socket.id} has requested to join a room ${data.roomUUID}`);
 
-		const room_ref = _rooms.get(data.roomUUID);
+		const roomRef = _rooms.get(data.roomUUID);
 
 		let isSuccess: boolean = false;
 		let errorMesage: string | undefined = "The room was not found or password did not match";
 		let roomSocketIds: string[] | undefined = undefined;
-		if (room_ref?.password === data.roomPassword || room_ref?.password === "") {
-			roomSocketIds = [room_ref.owner.id, ...room_ref.participants.map((s) => s.id)];
+		if (roomRef?.password === data.roomPassword || roomRef?.password === "") {
+			roomSocketIds = [roomRef.owner.socket.id, ...roomRef.participants.map((s) => s.socket.id)];
 			isSuccess = true;
 			errorMesage = undefined;
 		}
@@ -185,6 +205,8 @@ io.on("connection", (socket) => {
 			isSuccess,
 			errorMesage,
 			peerSocketIds: roomSocketIds,
+			roomName: roomRef?.name,
+			ownerName: roomRef?.owner.name,
 		} as IJoinRoomRes);
 	});
 
@@ -206,21 +228,69 @@ io.on("connection", (socket) => {
 		} as ICallAcceptedData);
 	});
 
+	socket.on("leaveRoom", () => {
+		info = {
+			isConnected: false,
+			isOwner: false,
+			uuid: "",
+			name: info?.name || "",
+		}
+	});
+
+	socket.on("changeName", (data: IChangeNameData) => {
+		info.name = data.newName;
+
+		socket.emit("changeNameRes", {
+			isSuccess: true,
+		} as IChangeNameRes)
+	})
+
 	socket.on("disconnect", () => {
 		dbg(`User ${socket.id} has disconnected`);
 
+		// do not do anything else if user isn't connected to a room
+		if (!(info?.isConnected)) return;
 
-		// if (info) {
-		// 	const room = _rooms.get(info?.uuid);
 
-		// 	 if (ro// if (info) {
-		// 	const room = _rooms.get(info?.uuid);
+		let roomRef = _rooms.get(info.uuid)!;
 
-		// 	 if (room?.participants.length === 0 &&  info.isOwner)
-		// 	 	_rooms.delete(info.uuid);
-		// }om?.participants.length === 0 &&  info.isOwner)
-		// 	 	_rooms.delete(info.uuid);
-		// }
+		// if there is no one remaining in the room, destroy it 
+		if (roomRef.participants.length == 0 && info.isOwner) {
+			_rooms.delete(info.uuid);
+			return
+		}
+
+		// if there is still someone in the room and user was the owner,
+		// transfer owner to them (if there is multiple people, choose one at random)
+		if (roomRef.participants.length > 0 && info.isOwner) {
+			// var item = items[Math.floor(Math.random()*items.length)];
+			let chosenIdx = Math.floor(Math.random()*roomRef.participants.length);
+			let chosenSocketId = roomRef.participants[chosenIdx].socket.id;
+
+			_rooms.set(info.uuid, {
+				name: roomRef.name,
+				owner: roomRef.participants[chosenIdx],
+				participants: roomRef.participants.filter((p) => p.socket.id !== chosenSocketId),
+				password: roomRef.password,
+			});
+
+			Array.from(getOtherSocketIdsInRoom(info.uuid, chosenSocketId)).forEach((id) => {
+				io.to(id!).emit("changedOwner", {
+					newOwnerName: roomRef.participants[chosenIdx].name,
+					newOwnerSocketId: chosenSocketId
+				});
+			})
+
+			io.to(chosenSocketId).emit("promotedToOwner");
+			dbg(`Room ${info.uuid} changed owner due to last owner disconnecting`)
+		} 
+
+		// notify other users in room
+		for (let id of Array.from(getOtherSocketIdsInRoom(info?.uuid, socket.id)))
+			io.to(id!).emit("userDisconnected", {
+				userName: info.name,
+				userSocketId: socket.id
+			} as IUserDisconnectedData);
 
 		socket.broadcast.emit("userDisconnected", {
 			userSocketId: socket.id,

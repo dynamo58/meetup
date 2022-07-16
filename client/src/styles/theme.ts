@@ -23,6 +23,12 @@ const ButtonStyles = {
 				bg: mode(darken("accentSecondary", 15), whiten("accentSecondary", 15))(props)
 			}
 		}),
+		transparent: (props: Dict<any> | StyleFunctionProps) => ({
+			bg: "#00000025",
+			_hover: {
+				bg: mode("#00000025", "#00000040")(props)
+			}
+		}),
 	},
 	defaultProps: {},
 }
@@ -31,6 +37,9 @@ const InputStyles = {
 	baseStyle: (props: Dict) => ({
 		field: {
 			bg: mode('bgAlt_lm', 'bgAlt_dm')(props),
+			_hover: {
+				borderColor: mode('bgAlt_dm', 'bgAlt_lm')(props),
+			},
 			borderColor: mode('bgAlt_dm', 'bgAlt_lm')(props),
 			_placeholder: {
 				color: mode('bgAlt_dm', 'bgAlt_lm')(props),

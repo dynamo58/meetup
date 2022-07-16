@@ -2,10 +2,9 @@ import React, { createContext, useState, useRef, RefObject, PropsWithChildren, u
 import { io } from "socket.io-client";
 import Peer, { Instance } from "simple-peer";
 
-import { IGetRoomsRes, ISocketConnectRes, IJoinRoomData, IJoinRoomRes, IUserIsCallingData, IAnswerCallData, ICreateRoomData, ICreateRoomRes, IEditRoomRes, ICallUserData, ICallAcceptedData } from "../../shared/shared";
+import { IGetRoomsRes, ISocketConnectRes, IJoinRoomData, IJoinRoomRes, IUserIsCallingData, IAnswerCallData, ICreateRoomData, ICreateRoomRes, IEditRoomRes, ICallUserData, ICallAcceptedData, IEditRoomData, IUserDisconnectedData, IChangeNameData, IChangeNameRes } from "../../shared/shared";
 
 import { ModalControls } from "./components/Modal";
-import { setInterval } from "timers/promises";
 
 interface VideoParticipant {
 	peer: Instance,
@@ -19,7 +18,6 @@ interface RoomUserSpecifics {
 	isOwner: boolean,
 	// is `null` if `isOwner` is `true`
 	ownerName: string | null,
-	name: string,
 	peers: Map<string, VideoParticipant>,
 	uuid: string | null,
 }
@@ -28,13 +26,13 @@ interface ISocketContext {
 	ownVideoRef: RefObject<HTMLVideoElement>,
 	// stream: MediaStream | undefined,
 	name: string,
-	setName: React.Dispatch<React.SetStateAction<string>>,
+	setNameHandler: () => void,
 	socketId: string,
 	createRoom: (roomUUID: string, roomPassword: string) => void,
 	joinRoom: (roomUUID: string, roomPassword: string) => void,
 	leaveRoom: () => void,
 	initConnection: () => void,
-	updateRoom: (name: string, password: string) => void,
+	updateRoom: (arg0: IEditRoomData) => void,
 	roomInfo: RoomUserSpecifics,
 	getRooms: () => void,
 	rooms: IGetRoomsRes | null,
@@ -69,27 +67,12 @@ const ContextProvider = (props: PropsWithChildren) => {
 		roomName: "",
 		isConnected: false,
 		isOwner: false,
-		name: "",
 		peers: new Map(),
 		uuid: null,
 		ownerName: null,
 	});
 
 	const ownVideoRef = useRef<HTMLVideoElement>(null);
-
-	useEffect(() => {
-		// window.setInterval(async () => {
-		// 	console.log("foo")
-		// 	if (!myStream) {
-		// 		console.log("foo1")
-
-		// 		getStream().then((s) => {
-		// 			if (s) setMyStream(s)
-		// 			console.log("foo2")
-		// 		});
-		// 	}
-		// }, 1000);
-	}, []);
 
 	const getStream: () => Promise<MediaStream | null> = async () => {
 		let t = await navigator.mediaDevices.getUserMedia({
@@ -104,13 +87,49 @@ const ContextProvider = (props: PropsWithChildren) => {
 				console.log(e);
 				return null;
 			});
-
-
 		return t;
 	}
 
-	const initConnection = () => {
+	const setNameHandler = () => {
+		const name = (document.getElementById("newName")! as HTMLInputElement).value;
 
+		if (name === "") {
+			setModal({
+				heading: "Error changing name",
+				text: "You must set a valid name!",
+				isVisible: true,
+			});
+			return;
+		}
+
+		socket.emit("changeName", {
+			newName: name,
+		} as IChangeNameData)
+
+		socket.on("changeNameRes", (data: IChangeNameRes) => {
+			if (!data.isSuccess) {
+				setModal({
+					heading: "Error changing name",
+					text: data.errorMessage || "",
+					isVisible: true,
+				});
+				return;
+			}
+
+			setName(name);
+			localStorage.setItem("name", name);
+		})
+	}
+
+	useEffect(() => {
+		const recoveredName = localStorage.getItem("name");
+		if (recoveredName) {
+			setName(recoveredName);
+			(document.getElementById("newName")! as HTMLInputElement).value = recoveredName;
+		}
+	}, [])
+
+	const initConnection = () => {
 		getStream()
 			.then((st) => {
 				if (typeof st === null) {
@@ -169,7 +188,6 @@ const ContextProvider = (props: PropsWithChildren) => {
 					});
 
 					return {
-						name: i.name,
 						isOwner: i.isOwner,
 						peers: foo,
 						isConnected: i.isConnected,
@@ -181,6 +199,24 @@ const ContextProvider = (props: PropsWithChildren) => {
 			});
 			peer.signal(data.signalData);
 		});
+
+		socket.on("promotedToOwner", () => {
+			setRoomInfo((i) => {
+				return {
+					isOwner: true,
+					peers: i.peers,
+					isConnected: true,
+					uuid: i.uuid,
+					ownerName: i.ownerName,
+					roomName: i.roomName
+				}
+				
+			})
+		});
+
+		socket.on("userDisconnected", (data: IUserDisconnectedData) => {
+
+		})
 	}
 
 	const joinRoom = (roomUUID: string, roomPassword: string) => {
@@ -192,10 +228,10 @@ const ContextProvider = (props: PropsWithChildren) => {
 			nickname: name,
 		} as IJoinRoomData);
 
-		socket.on("joinRoomRes", (data: IJoinRoomRes) => {
-			if (!data.isSuccess) {
+		socket.on("joinRoomRes", (joinRoomData: IJoinRoomRes) => {
+			if (!joinRoomData.isSuccess) {
 				setModal({
-					text: data.errorMessage || "",
+					text: joinRoomData.errorMessage || "",
 					heading: "Error connecting",
 					isVisible: true,
 				});
@@ -204,10 +240,10 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			dbg(`Successfully joined room ${roomUUID}`);
 
-			for (const id of data.peerSocketIds) {
+			for (const id of joinRoomData.peerSocketIds) {
 				dbg(`Attempting to call ${id}`);
 
-				console.log({myStream});
+
 				const peer = new Peer({
 					initiator: true,
 					trickle: false,
@@ -234,13 +270,12 @@ const ContextProvider = (props: PropsWithChildren) => {
 						});
 
 						return {
-							name: i.name,
-							isOwner: i.isOwner,
+							isOwner: false,
 							peers: foo,
-							isConnected: i.isConnected,
+							isConnected: true,
 							uuid: i.uuid,
 							ownerName: i.ownerName,
-							roomName: i.roomName
+							roomName: joinRoomData.roomName
 						}
 					});
 				});
@@ -265,8 +300,8 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			if (!data.isSuccess) {
 				setModal({
-					text: data.errorMessage || "",
 					heading: "Error creating room",
+					text: data.errorMessage || "",
 					isVisible: true,
 				});
 				return;
@@ -276,10 +311,9 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			setRoomInfo((i) => {
 				return {
-					name: i.name,
 					isOwner: true,
 					peers: i.peers,
-					isConnected: i.isConnected,
+					isConnected: true,
 					uuid: data.roomUuid!,
 					ownerName: i.ownerName,
 					roomName,
@@ -288,13 +322,11 @@ const ContextProvider = (props: PropsWithChildren) => {
 		});
 	}
 
-	const updateRoom = (name: string, password: string) => {
+	// update the information about the current room
+	const updateRoom = (arg0: IEditRoomData) => {
 		dbg(`Attempting to update room ${name}`);
 
-		socket.emit("editRoom", {
-			roomName: name,
-			roomPassword: password,
-		} as ICreateRoomData);
+		socket.emit("editRoom", arg0);
 
 		socket.on("editRoomRes", (data: IEditRoomRes) => {
 			if (!data.isSuccess) {
@@ -308,11 +340,10 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			dbg(`Room ${name} successfully edited`);
 
-
 			setRoomInfo((i) => {
 				return {
 					name,
-					isOwner: i.isOwner,
+					isOwner: i.isOwner, // should be true anyway if the edit succeeded
 					peers: i.peers,
 					isConnected: i.isConnected,
 					uuid: i.uuid,
@@ -323,6 +354,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 		})
 	}
 
+	// get info about all of the rooms there are
 	const getRooms = () => {
 		dbg("Attempting to fetch rooms");
 
@@ -330,12 +362,29 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 		socket.on("getRoomsRes", (data: IGetRoomsRes) => {
 			setRooms(data);
-			dbg(`Received rooms ${data.rooms}`)
+			dbg(`Received rooms`)
 		});
 	}
 
 	const leaveRoom = () => {
 		dbg(`Leaving room`);
+
+		// identify the server, which tells all other peers in room
+		socket.emit("leaveRoom");
+
+		// clean up
+		Array.from(roomInfo.peers).forEach(p => {
+			p[1].peer.destroy();
+		});
+
+		setRoomInfo({
+			roomName: "",
+			isConnected: false,
+			isOwner: false,
+			peers: new Map(),
+			uuid: null,
+			ownerName: null,
+		});
 	};
 
 	return (
@@ -349,7 +398,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 				ownVideoRef,
 				// stream,
 				name,
-				setName,
+				setNameHandler,
 				socketId,
 				leaveRoom,
 				joinRoom,

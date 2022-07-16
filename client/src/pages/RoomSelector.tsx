@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
 	Stack,
 	Center,
@@ -13,7 +14,14 @@ const Room: React.FC = () => {
 
 	useEffect(() => {
 		getRooms(); 
-	}, [getRooms])
+	}, []);
+
+	const navigate = useNavigate();
+	function navigate_promise() {
+		return new Promise(function (resolve, reject) {
+			resolve(navigate("/room", { replace: true }))
+		})
+	}
 
 	return (
 		<Center height={"100%"} flexGrow={"2"}>
@@ -32,7 +40,9 @@ const Room: React.FC = () => {
 										id={`connect-password-${r.uuid}`}
 										type="password"
 										placeholder="Room password"
+										variant={"xd"}
 										padding={"0.2em"}
+										margin={"0.33em 0 0.33em 0"}
 									/>
 								)}
 								<br />
@@ -41,7 +51,9 @@ const Room: React.FC = () => {
 									const uuid = r.uuid;
 									let pwd = document.getElementById(`connect-password-${r.uuid}`);
 									let password = pwd ? (pwd as HTMLInputElement).value : "";
-									joinRoom(uuid, password);
+									navigate_promise().then(() => {
+										joinRoom(uuid, password);
+									});
 								}}>
 									Connect
 								</Button>

@@ -11,7 +11,8 @@ import {
 	Input,
 	Button,
 	Center,
-	useClipboard
+	useClipboard,
+	useColorMode
 } from '@chakra-ui/react'
 
 import { SocketContext } from "../Context";
@@ -24,20 +25,20 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 
 	let { updateRoom, roomInfo } = useContext(SocketContext)!;
 	const { hasCopied, onCopy } = useClipboard(roomInfo.uuid!);
+	const { colorMode } = useColorMode();
 
-	const updateRoomHandler = () => {
+	const updateRoomName = () => {
 		const name = (document.getElementById("current-name")! as HTMLInputElement).value;
-		
+		updateRoom({roomName: name, roomPassword: null});
+	}
+
+	const updateRoomPassword = () => {
 		const password_div = document.getElementById("current-password")! as HTMLInputElement;
 		const _password = (password_div).value;
 		password_div.value = "";
 
-		updateRoom(name, _password);
+		updateRoom({ roomPassword: _password, roomName: null });
 	}
-
-	useEffect(() => {
-		// (document.getElementById("current-name")! as HTMLInputElement).value = roomInfo.roomName;
-	}, []);
 
 	return (
 		<Stack direction="column" maxW="30em" borderRadius="5px">
@@ -55,7 +56,12 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 								onClick={onCopy}
 								cursor={"pointer"}
 							>
-								<Text maxW={"10em"}>
+								<Text
+									maxW={"10em"}
+									padding={"0.2em"}
+									borderRadius={"0.5em"}
+									bg={hasCopied ? "accentSecondary" : undefined}
+								>
 									{roomInfo.uuid ? roomInfo.uuid.slice(0, 10) + "..." : ""}
 								</Text>
 							</Td>
@@ -63,10 +69,17 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 						<Tr>
 							<Td>Room name</Td>
 							<Td>
-								{ roomInfo.isOwner ? (
+								{roomInfo.isOwner ? (<>
 									<Input
 										id="current-name"
-									/>) : roomInfo.roomName
+										placeholder={"New name"}
+										value={roomInfo.roomName}
+										variant={"xd"}
+									/>
+									<br />
+									<Button width={"100%"} onClick={updateRoomName}>
+										Apply
+									</Button></>) : roomInfo.roomName
 								}
 							</Td>
 						</Tr>
@@ -78,16 +91,20 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 									id="current-password"
 									isDisabled={!roomInfo.isOwner}
 									type="password"
+									placeholder={"New password"}
+									variant={"xd"}
 								/>
+								<br />
+								<Button width={"100%"} onClick={updateRoomPassword}>
+									Apply
+								</Button>
 							</Td>
 						</Tr>
 					</>)}
 					</Tbody>
 				</Table>
 			</TableContainer>
-			<Button alignSelf={"center"}  width={"5em"} onClick={updateRoomHandler}>
-				Apply
-			</Button>
+			
 		</Stack>
 	)
 }

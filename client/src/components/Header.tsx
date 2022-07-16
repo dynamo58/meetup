@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -6,12 +6,15 @@ import {
 	Text,
 	Button,
 	useColorMode,
+	Input,
 } from "@chakra-ui/react";
 
 import {
 	MoonIcon,
 	SunIcon
 } from "@chakra-ui/icons";
+
+import { SocketContext } from "../Context";
 
 interface IHeaderSectionProps {
 	children?: React.ReactNode,
@@ -34,6 +37,7 @@ const HeaderSection: React.FC<IHeaderSectionProps> = (props) => {
 
 const Header: React.FC = () => {
 	const { colorMode, toggleColorMode } = useColorMode();
+	const { setNameHandler, setModal } = useContext(SocketContext)!;
 
 	return (
 		<Flex
@@ -46,7 +50,20 @@ const Header: React.FC = () => {
 			bg={colorMode == "light" ? "bgAlt_lm" : "bgAlt_dm"}
 		>
 			<HeaderSection>
-				{/*  */}
+				<div style={{display: "flex", gap: ".4em"}}>
+					<Input
+						id={"newName"}
+						placeholder={"New name"}
+						maxW={"10em"}
+						variant={"xd"}
+					/>
+					<Button
+						textAlign={"center"}
+						variant={"primary"}
+						style={{ display: "inline-block", padding: "0 1em 0 1em" }}
+						onClick={setNameHandler}
+					>Set</Button>
+				</div>
 			</HeaderSection>
 			<HeaderSection>
 				<Link to="/rooms" style={{ padding: "1em 0.5em 1em 0.5em" }}>ROOMS</Link>

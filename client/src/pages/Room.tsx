@@ -45,22 +45,29 @@ const Room: React.FC = () => {
 					direction="column"
 				>
 					<>
-						<Video
-							ref={ownVideoRef}
-							name="You"
-							mute={true}
-						/>
+						<div>
+							<p>You</p>
+							<video
+								ref={ownVideoRef}
+								autoPlay
+								muted={true}
+								style={{ maxWidth: "20em", borderRadius: "1em" }}
+							/>
+						</div>
 
 						{
 							Array.from(roomInfo.peers).map((p) =>
-								<video
-									key={p[0]}
-									id={p[0]}
-									muted={false}
-									autoPlay={true}
-									controls={true}
-									style={{maxWidth: "20em", borderRadius: "1em"}}
-								/>
+								<div>
+									<p>{p[1].name}</p>
+									<video
+										key={p[0]}
+										id={p[0]}
+										muted={false}
+										autoPlay={true}
+										controls={true}
+										style={{ maxWidth: "20em", borderRadius: "1em" }}
+									/>
+								</div>
 							)
 						}
 					</>

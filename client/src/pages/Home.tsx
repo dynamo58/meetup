@@ -34,7 +34,7 @@ const Home: React.FC = () => {
 					alignSelf="center"
 					marginBottom={"5em"}
 				/>
-				<Text>
+				<Text alignSelf={"center"}>
 					Connect to a room
 				</Text>
 				<Stack display={"flex"} justifyContent={"center"} flexDir={"column"}>
@@ -43,11 +43,13 @@ const Home: React.FC = () => {
 						type="text"
 						placeholder="Room UUID"
 						autoComplete="off"
+						variant={"xd"}
 					/>
 					<Input
 						id="connect-password"
 						type="password"
 						placeholder="Room password"
+						variant={"xd"}
 					/><br />
 					<Button
 						alignSelf={"center"}
@@ -60,11 +62,11 @@ const Home: React.FC = () => {
 									heading: "Connection failed - input error",
 									text: "Missing UUID of the room you are trying to connect to",
 									isVisible: true,
-								})
+								});
+								return;
 							}
 
 							const password = (document.getElementById("connect-password")! as HTMLInputElement).value;
-
 
 							navigate_promise().then(() => {
 								joinRoom(uuid, password);
@@ -77,7 +79,7 @@ const Home: React.FC = () => {
 
 				<br /><br />
 
-				<Text>
+				<Text alignSelf={"center"}>
 					Create a new room
 				</Text>
 
@@ -86,11 +88,13 @@ const Home: React.FC = () => {
 						id="create-name"
 						type="text"
 						placeholder="Room name"
+						variant={"xd"}
 					/>
 					<Input
 						id="create-password"
 						type="password"
 						placeholder="Room password (optional)"
+						variant={"xd"}
 					/>
 					<Button
 						alignSelf={"center"}
@@ -104,6 +108,7 @@ const Home: React.FC = () => {
 									text: "A room must have a name",
 									isVisible: true,
 								})
+								return;
 							}
 							const password = (document.getElementById("create-password")! as HTMLInputElement).value;
 							navigate_promise().then(() => {

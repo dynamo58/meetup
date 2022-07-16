@@ -6,9 +6,11 @@ export interface ISocketConnectRes {
 
 export interface IUserDisconnectedData {
 	userSocketId: string,
+	userName: string
 };
 
 export interface ICreateRoomData {
+	name: string,
 	roomName: string,
 	roomPassword: string,
 };
@@ -22,6 +24,11 @@ export interface ICreateRoomRes {
 export interface IDeleteRoomRes {
 	isSuccess: boolean,
 	errorMessage?: string,
+};
+
+export interface IEditRoomData {
+	roomName: string | null,
+	roomPassword: string | null,
 };
 
 export interface IEditRoomRes {
@@ -38,7 +45,9 @@ export interface IJoinRoomData {
 export interface IJoinRoomRes {
 	isSuccess: true,
 	errorMessage?: string,
-	peerSocketIds: string[]
+	peerSocketIds: string[],
+	roomName: string,
+	ownerName: string,
 };
 
 export interface ICallUserData {
@@ -75,4 +84,13 @@ export interface ICallAcceptedData {
 
 export interface IRoomEdited {
 	roomName: string,
+}
+
+export interface IChangeNameData {
+	newName: string,
+}
+
+export interface IChangeNameRes {
+	isSuccess: boolean,
+	errorMessage?: string,
 }
