@@ -47,7 +47,20 @@ const InputStyles = {
 		}
 	}),
 	sizes: {},
-	variants: {},
+	variants: {
+		secondary: (props: Dict) => ({
+			field: {
+				bg: mode("bg_lm", "bg_dm")(props),
+				_hover: {
+					borderColor: mode('bg_dm', 'bg_lm')(props),
+				},
+				borderColor: mode('bg_dm', 'bg_lm')(props),
+				_placeholder: {
+					color: mode('bg_dm', 'bg_lm')(props),
+				},
+			}
+		})
+	},
 	defaultProps: {}
 }
 
@@ -56,11 +69,13 @@ const theme = extendTheme({
   styles: {
     global: (props: Dict<any> | StyleFunctionProps) => ({
       body: {
-        bg: mode("#efefef","#202020")(props),
+        bg: mode("bg_lm","bg_dm")(props),
       }
     })
   },
   colors: {
+	bg_lm:           "#efefef",
+	bg_dm:           "#202020",
 	bgAlt_lm:        "#dedede",
 	bgAlt_dm:        "#151515",
 	accentPrimary:   "#68bd51",

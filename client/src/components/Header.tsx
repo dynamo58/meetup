@@ -29,6 +29,7 @@ const HeaderSection: React.FC<IHeaderSectionProps> = (props) => {
 			wrap="wrap"
 			gap={5}
 			padding={6}
+			width={"33.33%"}
 		>
 			{props.children}
 		</Flex>
@@ -54,15 +55,17 @@ const Header: React.FC = () => {
 					<Input
 						id={"newName"}
 						placeholder={"New name"}
-						maxW={"10em"}
-						variant={"xd"}
+						variant={"secondary"}
+						onChange={() => {(document.getElementById("newNameButton")! as HTMLButtonElement).disabled = false}}
 					/>
 					<Button
+						id={"newNameButton"}
 						textAlign={"center"}
 						variant={"primary"}
-						style={{ display: "inline-block", padding: "0 1em 0 1em" }}
+						isDisabled
+						style={{ padding: "0 .75em 0 .75em" }}
 						onClick={setNameHandler}
-					>Set</Button>
+					>Change</Button>
 				</div>
 			</HeaderSection>
 			<HeaderSection>

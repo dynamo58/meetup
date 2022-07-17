@@ -43,11 +43,11 @@ export interface IJoinRoomData {
 };
 
 export interface IJoinRoomRes {
-	isSuccess: true,
+	isSuccess: boolean,
 	errorMessage?: string,
-	peerSocketIds: string[],
-	roomName: string,
-	ownerName: string,
+	peerSocketIds?: string[],
+	roomName?: string,
+	ownerName?: string,
 };
 
 export interface ICallUserData {

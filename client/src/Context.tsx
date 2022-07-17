@@ -118,7 +118,14 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			setName(name);
 			localStorage.setItem("name", name);
+
+			(document.getElementById("newNameButton")! as HTMLButtonElement).disabled = true;
 		})
+	}
+
+	// gets triggered everytime user goes out of the `/room` endpoint 
+	const leaveRoomHandler = () => {
+		
 	}
 
 	useEffect(() => {
