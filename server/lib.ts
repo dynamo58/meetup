@@ -44,10 +44,6 @@ export class Room implements IRoom {
 	getIds(): string[] {
 		return [this.owner.socket.id, ...this.participants.map((p) => p.socket.id)];
 	};
-
-	static getRoomIdx = () => {
-		
-	} 
 }
 
 

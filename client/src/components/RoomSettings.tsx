@@ -73,12 +73,23 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 									<Input
 										id="current-name"
 										placeholder={"New name"}
-										value={roomInfo.roomName}
+										defaultValue={roomInfo.roomName}
 										variant={"xd"}
+										style={{
+											borderBottomLeftRadius: 0, 
+											borderBottomRightRadius: 0
+										}}
 									/>
 									<br />
-									<Button width={"100%"} onClick={updateRoomName}>
-										Apply
+									<Button
+										width={"100%"}
+										onClick={updateRoomName}
+										style={{
+											borderTopLeftRadius: 0, 
+											borderTopRightRadius: 0,
+											maxHeight: "1.75em"
+										}}
+									>Apply
 									</Button></>) : roomInfo.roomName
 								}
 							</Td>
@@ -93,9 +104,21 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 									type="password"
 									placeholder={"New password"}
 									variant={"xd"}
+									style={{
+										borderBottomLeftRadius: 0, 
+										borderBottomRightRadius: 0
+									}}
 								/>
 								<br />
-								<Button width={"100%"} onClick={updateRoomPassword}>
+								<Button
+									width={"100%"}
+									onClick={updateRoomPassword}
+									style={{ 
+										borderTopLeftRadius: 0,
+										borderTopRightRadius: 0,
+										maxHeight: "1.75em"
+									}}
+								>
 									Apply
 								</Button>
 							</Td>

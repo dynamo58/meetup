@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 
 import {
 	Stack,
@@ -15,7 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
-	let { joinRoom, createRoom, setModal } = useContext(SocketContext)!;
+	let { joinRoom, createRoom, setModal, leaveRoomHandler } = useContext(SocketContext)!;
 	
 	const navigate = useNavigate();
 
@@ -24,6 +24,10 @@ const Home: React.FC = () => {
 			resolve(navigate("/room", { replace: true }))
 		})
 	}
+
+	useEffect(() => {
+		leaveRoomHandler()
+	}, [])
 	
 	return (
 		<Center height="100%" flexGrow={2}>

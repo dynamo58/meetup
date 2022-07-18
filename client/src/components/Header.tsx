@@ -29,7 +29,7 @@ const HeaderSection: React.FC<IHeaderSectionProps> = (props) => {
 			wrap="wrap"
 			gap={5}
 			padding={6}
-			width={"33.33%"}
+			width={"27%"}
 		>
 			{props.children}
 		</Flex>

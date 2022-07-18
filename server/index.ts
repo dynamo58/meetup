@@ -176,10 +176,10 @@ io.on("connection", (socket) => {
 
 		const idx = getRoomIdx(data.roomUUID);
 
-		if (!idx) {
+		if (idx === null) {
 			socket.emit("joinRoomRes", {
 				isSuccess: false,
-				errorMesage: "The specified room doesn't exist",
+				errorMessage: "The specified room doesn't exist",
 			} as IJoinRoomRes);
 			return;
 		}
@@ -198,7 +198,7 @@ io.on("connection", (socket) => {
 		})
 
 		socket.emit("joinRoomRes", {
-			peerSocketIds: [_rooms[idx].owner.socket.id, ..._rooms[idx].participants.map((s) => s.socket.id)],
+			peerSocketIds: [_rooms[idx].owner.socket.id, ..._rooms[idx].participants.filter((s) => s.socket.id !== socket.id)],
 			isSuccess: true,
 			errorMessage: undefined,
 			roomName: _rooms[idx].name,
@@ -250,7 +250,7 @@ io.on("connection", (socket) => {
 
 
 		const idx = getRoomIdx(info.uuid);
-		if (!idx) return;
+		if (idx === null) return;
 
 		// if there is no one remaining in the room, destroy it 
 		if (_rooms[idx].participants.length == 0 && info.isOwner) {

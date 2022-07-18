@@ -10,10 +10,11 @@ import {
 import { SocketContext } from "../Context";
 
 const Room: React.FC = () => {
-	let { getRooms, rooms, joinRoom } = useContext(SocketContext)!;
+	let { getRooms, rooms, joinRoom, leaveRoomHandler } = useContext(SocketContext)!;
 
 	useEffect(() => {
-		getRooms(); 
+		leaveRoomHandler();
+		getRooms();
 	}, []);
 
 	const navigate = useNavigate();

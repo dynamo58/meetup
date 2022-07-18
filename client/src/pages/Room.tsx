@@ -56,10 +56,9 @@ const Room: React.FC = () => {
 
 					{
 						Array.from(roomInfo.peers).map((p) =>
-							<div>
+							<div key={p[0]}>
 								<p>{p[1].name}</p>
 								<video
-									key={p[0]}
 									id={p[0]}
 									muted={false}
 									autoPlay={true}

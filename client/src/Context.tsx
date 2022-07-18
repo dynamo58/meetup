@@ -30,7 +30,7 @@ interface ISocketContext {
 	socketId: string,
 	createRoom: (roomUUID: string, roomPassword: string) => void,
 	joinRoom: (roomUUID: string, roomPassword: string) => void,
-	leaveRoom: () => void,
+	leaveRoomHandler: () => void,
 	initConnection: () => void,
 	updateRoom: (arg0: IEditRoomData) => void,
 	roomInfo: RoomUserSpecifics,
@@ -123,11 +123,6 @@ const ContextProvider = (props: PropsWithChildren) => {
 		})
 	}
 
-	// gets triggered everytime user goes out of the `/room` endpoint 
-	const leaveRoomHandler = () => {
-		
-	}
-
 	useEffect(() => {
 		const recoveredName = localStorage.getItem("name");
 		if (recoveredName) {
@@ -176,15 +171,10 @@ const ContextProvider = (props: PropsWithChildren) => {
 					endpointSocketId: data.callerSocketId,
 					signalData
 				} as IAnswerCallData);
-
-				// peer.removeListener("signal", () => {});
 			});
 
 			peer.on("stream", (_stream) => {
 				dbg(`Received stream from user ${data.callerSocketId}`);
-
-				// let ref = React.createRef<HTMLVideoElement>();
-				// ref.current!.srcObject = _stream;
 
 				setRoomInfo((i) => {
 					let foo = i.peers;
@@ -247,7 +237,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			dbg(`Successfully joined room ${roomUUID}`);
 
-			for (const id of joinRoomData.peerSocketIds) {
+			for (const id of joinRoomData.peerSocketIds!) {
 				dbg(`Attempting to call ${id}`);
 
 
@@ -282,7 +272,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 							isConnected: true,
 							uuid: i.uuid,
 							ownerName: i.ownerName,
-							roomName: joinRoomData.roomName
+							roomName: joinRoomData.roomName!
 						}
 					});
 				});
@@ -345,7 +335,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 				return;
 			}
 
-			dbg(`Room ${name} successfully edited`);
+			dbg(`Room ${roomInfo.roomName} successfully edited`);
 
 			setRoomInfo((i) => {
 				return {
@@ -373,7 +363,8 @@ const ContextProvider = (props: PropsWithChildren) => {
 		});
 	}
 
-	const leaveRoom = () => {
+	// gets triggered everytime user goes out of the `/room` endpoint 
+	const leaveRoomHandler = () => {
 		dbg(`Leaving room`);
 
 		// identify the server, which tells all other peers in room
@@ -407,7 +398,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 				name,
 				setNameHandler,
 				socketId,
-				leaveRoom,
+				leaveRoomHandler,
 				joinRoom,
 				createRoom,
 				roomInfo
