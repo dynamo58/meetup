@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 import {
 	Flex,
-	Text,
 	Button,
 	useColorMode,
 	Input,
@@ -25,7 +24,7 @@ interface IHeaderSectionProps {
 
 const Header: React.FC = () => {
 	const { colorMode, toggleColorMode } = useColorMode();
-	const { setNameHandler, setModal } = useContext(SocketContext)!;
+	const { setNameHandler } = useContext(SocketContext)!;
 	const [isLargerThan1000] = useMediaQuery('(min-width: 1000px)');
 	const [isLargerThan400] = useMediaQuery('(min-width: 400px)');
 
@@ -61,7 +60,7 @@ const Header: React.FC = () => {
 			maxHeight={isLargerThan1000 ? "3em" : undefined}
 			align="center"
 			fontSize="1.1em"
-			bg={colorMode == "light" ? "bgAlt_lm" : "bgAlt_dm"}
+			bg={colorMode === "light" ? "bgAlt_lm" : "bgAlt_dm"}
 		>
 			<HeaderSection width={"15em"} justify={isLargerThan1000 ? "left" : "center"}>
 				<div style={{ display: "flex", gap: ".4em" }}>
@@ -69,13 +68,11 @@ const Header: React.FC = () => {
 						id={"newName"}
 						placeholder={"New name"}
 						variant={"secondary"}
-						onChange={() => { (document.getElementById("newNameButton")! as HTMLButtonElement).disabled = false }}
 					/>
 					<Button
 						id={"newNameButton"}
 						textAlign={"center"}
 						variant={"primary"}
-						isDisabled
 						style={{ padding: "0 .75em 0 .75em" }}
 						onClick={setNameHandler}
 					>Change</Button>

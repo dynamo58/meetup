@@ -1,4 +1,3 @@
-import ReactDOM from "react-dom";
 import App from "./App";
 
 import { ChakraProvider, ThemeProvider } from "@chakra-ui/react";
@@ -9,7 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import { createRoot } from 'react-dom/client';
 const container = document.getElementById('root');
-const root = createRoot(container!); // createRoot(container!) if you use TypeScript
+const root = createRoot(container!);
 root.render(
   <ThemeProvider theme={theme}>
     <ChakraProvider resetCSS theme={theme}>

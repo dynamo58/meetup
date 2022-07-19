@@ -91,9 +91,9 @@ const ContextProvider = (props: PropsWithChildren) => {
 	}
 
 	const setNameHandler = () => {
-		const name = (document.getElementById("newName")! as HTMLInputElement).value;
+		const newName = (document.getElementById("newName")! as HTMLInputElement).value;
 
-		if (name === "") {
+		if (newName === "") {
 			setModal({
 				heading: "Error changing name",
 				text: "You must set a valid name!",
@@ -103,10 +103,12 @@ const ContextProvider = (props: PropsWithChildren) => {
 		}
 
 		socket.emit("changeName", {
-			newName: name,
+			newName,
 		} as IChangeNameData)
 
 		socket.on("changeNameRes", (data: IChangeNameRes) => {
+			dbg(`Received name change response`);
+
 			if (!data.isSuccess) {
 				setModal({
 					heading: "Error changing name",
@@ -116,10 +118,9 @@ const ContextProvider = (props: PropsWithChildren) => {
 				return;
 			}
 
-			setName(name);
-			localStorage.setItem("name", name);
-
-			(document.getElementById("newNameButton")! as HTMLButtonElement).disabled = true;
+			dbg(`Name changed to ${newName}`)
+			setName(newName);
+			localStorage.setItem("name", newName);
 		})
 	}
 
@@ -134,7 +135,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 	const initConnection = () => {
 		getStream()
 			.then((st) => {
-				if (typeof st === null) {
+				if (st === null) {
 					setModal({
 						heading: "No webcam or microphone detected",
 						text: "Those two components are required for participation in calls",

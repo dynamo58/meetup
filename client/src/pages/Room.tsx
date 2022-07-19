@@ -2,14 +2,13 @@ import React, { useContext, useEffect } from "react";
 import {
 	Stack,
 	Divider,
-	useFocusEffect,
 } from "@chakra-ui/react";
 
 import { SocketContext } from "../Context";
 import RoomSettings from "../components/RoomSettings";
 
 const Room: React.FC = () => {
-	let { ownVideoRef, initConnection, roomInfo } = useContext(SocketContext)!;
+	let { ownVideoRef, roomInfo } = useContext(SocketContext)!;
 
 	useEffect(() => {
 		window.dispatchEvent(new Event("videoInit"));

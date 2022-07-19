@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext } from "react";
 
 import {
 	Stack,
@@ -10,9 +10,7 @@ import {
 	TableContainer,
 	Input,
 	Button,
-	Center,
 	useClipboard,
-	useColorMode
 } from '@chakra-ui/react'
 
 import { SocketContext } from "../Context";
@@ -22,10 +20,8 @@ interface IRoomSettings {
 }
 
 const RoomSettings: React.FC<IRoomSettings> = (props) => {
-
 	let { updateRoom, roomInfo } = useContext(SocketContext)!;
 	const { hasCopied, onCopy } = useClipboard(roomInfo.uuid!);
-	const { colorMode } = useColorMode();
 
 	const updateRoomName = () => {
 		const name = (document.getElementById("current-name")! as HTMLInputElement).value;
