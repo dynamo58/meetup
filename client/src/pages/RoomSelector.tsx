@@ -62,7 +62,7 @@ const Room: React.FC = () => {
 						)
 					})
 				)}
-				
+
 			</Stack>
 		</Center>
 	)

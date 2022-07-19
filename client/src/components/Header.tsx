@@ -20,11 +20,12 @@ import { SocketContext } from "../Context";
 interface IHeaderSectionProps {
 	children?: React.ReactNode,
 	width?: string | number,
+	justify?: string,
 }
 
 const Header: React.FC = () => {
 	const { colorMode, toggleColorMode } = useColorMode();
-	const { setNameHandler, setModal }   = useContext(SocketContext)!;
+	const { setNameHandler, setModal } = useContext(SocketContext)!;
 	const [isLargerThan1000] = useMediaQuery('(min-width: 1000px)');
 	const [isLargerThan400] = useMediaQuery('(min-width: 400px)');
 
@@ -57,18 +58,18 @@ const Header: React.FC = () => {
 			justify="space-between"
 			flexDir={isLargerThan1000 ? "row" : "column-reverse"}
 			padding={isLargerThan1000 ? undefined : "0.5em"}
-			maxHeight={ isLargerThan1000 ? "3em" : undefined }
+			maxHeight={isLargerThan1000 ? "3em" : undefined}
 			align="center"
 			fontSize="1.1em"
-			bg={ colorMode == "light" ? "bgAlt_lm" : "bgAlt_dm" }
+			bg={colorMode == "light" ? "bgAlt_lm" : "bgAlt_dm"}
 		>
-			<HeaderSection width={"15em"}>
-				<div style={{display: "flex", gap: ".4em"}}>
+			<HeaderSection width={"15em"} justify={isLargerThan1000 ? "left" : "center"}>
+				<div style={{ display: "flex", gap: ".4em" }}>
 					<Input
 						id={"newName"}
 						placeholder={"New name"}
 						variant={"secondary"}
-						onChange={() => {(document.getElementById("newNameButton")! as HTMLButtonElement).disabled = false}}
+						onChange={() => { (document.getElementById("newNameButton")! as HTMLButtonElement).disabled = false }}
 					/>
 					<Button
 						id={"newNameButton"}
@@ -85,7 +86,7 @@ const Header: React.FC = () => {
 				<Link to="/" style={lineStyle}>HOME</Link>
 				<a href="https://github.com/dynamo58/meetup" target="_blank" style={lineStyle}>GITHUB</a>
 			</HeaderSection>
-			<HeaderSection width={"15em"}>
+			<HeaderSection width={"15em"} justify={isLargerThan1000 ? "right" : "center"}>
 				<Button onClick={toggleColorMode} variant={"secondary"}>
 					{colorMode === "light" ? <MoonIcon /> : <SunIcon />}
 				</Button>

@@ -29,7 +29,7 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 
 	const updateRoomName = () => {
 		const name = (document.getElementById("current-name")! as HTMLInputElement).value;
-		updateRoom({roomName: name, roomPassword: null});
+		updateRoom({ roomName: name, roomPassword: null });
 	}
 
 	const updateRoomPassword = () => {
@@ -76,7 +76,7 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 										defaultValue={roomInfo.roomName}
 										variant={"xd"}
 										style={{
-											borderBottomLeftRadius: 0, 
+											borderBottomLeftRadius: 0,
 											borderBottomRightRadius: 0
 										}}
 									/>
@@ -85,7 +85,7 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 										width={"100%"}
 										onClick={updateRoomName}
 										style={{
-											borderTopLeftRadius: 0, 
+											borderTopLeftRadius: 0,
 											borderTopRightRadius: 0,
 											maxHeight: "1.75em"
 										}}
@@ -94,40 +94,40 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 								}
 							</Td>
 						</Tr>
-					{roomInfo.isOwner && (<>
-						<Tr>
-							<Td>Room password</Td>
-							<Td>
-								<Input
-									id="current-password"
-									isDisabled={!roomInfo.isOwner}
-									type="password"
-									placeholder={"New password"}
-									variant={"xd"}
-									style={{
-										borderBottomLeftRadius: 0, 
-										borderBottomRightRadius: 0
-									}}
-								/>
-								<br />
-								<Button
-									width={"100%"}
-									onClick={updateRoomPassword}
-									style={{ 
-										borderTopLeftRadius: 0,
-										borderTopRightRadius: 0,
-										maxHeight: "1.75em"
-									}}
-								>
-									Apply
-								</Button>
-							</Td>
-						</Tr>
-					</>)}
+						{roomInfo.isOwner && (<>
+							<Tr>
+								<Td>Room password</Td>
+								<Td>
+									<Input
+										id="current-password"
+										isDisabled={!roomInfo.isOwner}
+										type="password"
+										placeholder={"New password"}
+										variant={"xd"}
+										style={{
+											borderBottomLeftRadius: 0,
+											borderBottomRightRadius: 0
+										}}
+									/>
+									<br />
+									<Button
+										width={"100%"}
+										onClick={updateRoomPassword}
+										style={{
+											borderTopLeftRadius: 0,
+											borderTopRightRadius: 0,
+											maxHeight: "1.75em"
+										}}
+									>
+										Apply
+									</Button>
+								</Td>
+							</Tr>
+						</>)}
 					</Tbody>
 				</Table>
 			</TableContainer>
-			
+
 		</Stack>
 	)
 }

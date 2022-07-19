@@ -3,7 +3,7 @@ const PORT = process.env.PORT || 3001;
 import express from "express";
 import * as http from "http"
 import { Server as SocketIOServer } from "socket.io";
-import cors, {} from "cors";
+import cors, { } from "cors";
 import { v4 } from "uuid";
 
 import {
@@ -55,13 +55,14 @@ let _rooms: Room[] = [];
 
 const getRoomIdx = (uuid: string): number | null => {
 	let idx = 0;
-	for (let r of _rooms)
+	for (let r of _rooms) {
 		if (r.uuid === uuid)
-			return idx; 
+			return idx;
 		idx++;
-	
+	}
+
 	return null;
-} 
+}
 
 io.on("connection", (socket) => {
 	dbg(`New user connected | id: ${socket.id}`)
@@ -71,7 +72,7 @@ io.on("connection", (socket) => {
 		uuid: "",
 		name: "",
 	};
-	
+
 	socket.emit("connectionRes", {
 		socketId: socket.id,
 	} as ISocketConnectRes);
@@ -86,7 +87,7 @@ io.on("connection", (socket) => {
 			rooms_arr.push({
 				uuid: r.uuid,
 				name: r.name,
-				activeCallersNum: r.participants.length+1,
+				activeCallersNum: r.participants.length + 1,
 				has_password: r.password !== ""
 			} as RoomGist);
 		};
@@ -103,7 +104,7 @@ io.on("connection", (socket) => {
 		const _uuid = v4();
 		const r = new Room(_uuid, data.roomName, data.roomPassword, new User(data.name, socket));
 		_rooms.push(r);
-		
+
 		info = {
 			uuid: _uuid,
 			isOwner: true,
@@ -132,9 +133,9 @@ io.on("connection", (socket) => {
 			return;
 		}
 
-		const idx = getRoomIdx(info.uuid)!; 
+		const idx = getRoomIdx(info.uuid)!;
 
-		_rooms[idx].name     = (data.roomName === null) ? _rooms[idx].name : data.roomName;
+		_rooms[idx].name = (data.roomName === null) ? _rooms[idx].name : data.roomName;
 		_rooms[idx].password = (data.roomPassword === null) ? _rooms[idx]!.password : data.roomPassword;
 
 		dbg(`Room  (${info?.uuid} -- ${data.roomName}) was changed. (new name ${data.roomName})`);
@@ -252,20 +253,20 @@ io.on("connection", (socket) => {
 		// if there is still someone in the room and user was the owner,
 		// transfer owner to them (if there is multiple people, choose one at random)
 		if (_rooms[idx].participants.length > 0 && info.isOwner) {
-			let chosenIdx = Math.floor(Math.random()*_rooms[idx].participants.length);
+			let chosenIdx = Math.floor(Math.random() * _rooms[idx].participants.length);
 			let chosenSocketId = _rooms[idx].participants[chosenIdx].socket.id;
 
 			_rooms[idx].owner = _rooms[idx].participants[chosenIdx],
-			_rooms[idx].participants =  _rooms[idx].participants.filter((p) => p.socket.id !== chosenSocketId),
+				_rooms[idx].participants = _rooms[idx].participants.filter((p) => p.socket.id !== chosenSocketId),
 
-			_rooms[idx].getIds()
-				.filter(i => i !== socket.id && i !== chosenSocketId)
-				.forEach((id) => {
-					io.to(id).emit("changedOwner", {
-						newOwnerName: _rooms[idx!].participants[chosenIdx].name,
-						newOwnerSocketId: chosenSocketId
-					});
-				})
+				_rooms[idx].getIds()
+					.filter(i => i !== socket.id && i !== chosenSocketId)
+					.forEach((id) => {
+						io.to(id).emit("changedOwner", {
+							newOwnerName: _rooms[idx!].participants[chosenIdx].name,
+							newOwnerSocketId: chosenSocketId
+						});
+					})
 
 			io.to(chosenSocketId).emit("promotedToOwner");
 			dbg(`Room ${info.uuid} changed owner due to last owner disconnecting`)
@@ -298,14 +299,14 @@ io.on("connection", (socket) => {
 		// do not do anything else if user isn't connected to a room
 		if (!(info?.isConnected)) return;
 		dbg(`User ${socket.id} left room ${info.uuid}`);
-		
+
 		userLeavingRoomIntrinsics();
 	});
 
 	socket.on("disconnect", () => {
 		if (!(info?.isConnected)) return;
 		dbg(`User ${socket.id} has disconnected`);
-		
+
 		userLeavingRoomIntrinsics();
 	});
 

@@ -52,9 +52,9 @@ const socket = io("http://localhost:3001");
 
 const ContextProvider = (props: PropsWithChildren) => {
 	let [myStream, setMyStream] = useState<MediaStream>();
-	const [socketId, setSocketId]           = useState("");
-	const [name, setName]                   = useState("");
-	
+	const [socketId, setSocketId] = useState("");
+	const [name, setName] = useState("");
+
 	const [modal, setModal] = useState<ModalControls>({
 		heading: "",
 		text: "",
@@ -62,7 +62,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 	});
 
 	const [rooms, setRooms] = useState<IGetRoomsRes | null>(null)
-	
+
 	const [roomInfo, setRoomInfo] = useState<RoomUserSpecifics>({
 		roomName: "",
 		isConnected: false,
@@ -207,7 +207,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 					ownerName: i.ownerName,
 					roomName: i.roomName
 				}
-				
+
 			})
 		});
 
@@ -388,21 +388,21 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 	return (
 		<SocketContext.Provider value={{
-				setModal,
-				modal,
-				rooms,
-				getRooms,
-				updateRoom,
-				initConnection,
-				ownVideoRef,
-				name,
-				setNameHandler,
-				socketId,
-				leaveRoomHandler,
-				joinRoom,
-				createRoom,
-				roomInfo
-			}}
+			setModal,
+			modal,
+			rooms,
+			getRooms,
+			updateRoom,
+			initConnection,
+			ownVideoRef,
+			name,
+			setNameHandler,
+			socketId,
+			leaveRoomHandler,
+			joinRoom,
+			createRoom,
+			roomInfo
+		}}
 		>
 			{props.children}
 		</SocketContext.Provider>

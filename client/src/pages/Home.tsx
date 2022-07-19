@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
 	let { joinRoom, createRoom, setModal, leaveRoomHandler } = useContext(SocketContext)!;
-	
+
 	const navigate = useNavigate();
 
 	function navigate_promise() {
@@ -28,7 +28,7 @@ const Home: React.FC = () => {
 	useEffect(() => {
 		leaveRoomHandler();
 	}, [])
-	
+
 	return (
 		<Center height="100%" flexGrow={2}>
 			<Stack maxW="20em" spacing={4} direction='column' w="100%">
@@ -76,7 +76,7 @@ const Home: React.FC = () => {
 								joinRoom(uuid, password);
 							});
 						}
-					}>
+						}>
 						Connect
 					</Button>
 				</Stack>
@@ -119,7 +119,7 @@ const Home: React.FC = () => {
 								createRoom(name, password);
 							});
 						}
-					}>
+						}>
 						Create
 					</Button>
 				</Stack>

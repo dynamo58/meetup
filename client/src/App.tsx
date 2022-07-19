@@ -24,12 +24,12 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Modal/>
+      <Modal />
       <Flex flexDir="column" minHeight="100vh">
         <Header />
         <Divider />
         <Routes>
-          <Route path="/"     element={ <Home /> } />
+          <Route path="/" element={<Home />} />
           <Route path="/rooms" element={<RoomSelector />} />
           <Route path="/room" element={<Room />} />
         </Routes>

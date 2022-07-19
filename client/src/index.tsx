@@ -12,7 +12,7 @@ const container = document.getElementById('root');
 const root = createRoot(container!); // createRoot(container!) if you use TypeScript
 root.render(
   <ThemeProvider theme={theme}>
-    <ChakraProvider resetCSS theme={ theme }>
+    <ChakraProvider resetCSS theme={theme}>
       <BrowserRouter>
         <ContextProvider>
           <App />
