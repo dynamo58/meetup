@@ -121,6 +121,7 @@ io.on("connection", (socket) => {
 
 	// allow caller to edit name/password of room if they are an owner
 	socket.on("editRoom", (data: IEditRoomData) => {
+		if (!(info?.isConnected)) return;
 		dbg(`User ${socket.id} has requested to edit room (${info?.uuid} -- ${data.roomName})`);
 
 		if (!info || !info?.isOwner) {
@@ -149,8 +150,8 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("deleteRoom", () => {
+		if (!(info?.isConnected)) return;
 		dbg!(`User ${socket.id}  has requested to delete room (${info?.uuid})`);
-
 
 		if (!info?.isOwner) {
 			socket.emit("deleteRoomRes", {
@@ -171,6 +172,7 @@ io.on("connection", (socket) => {
 		_rooms.splice(idx, 1);
 	});
 
+	// client trying to join a voice chatroom
 	socket.on("joinRoom", (data: IJoinRoomData) => {
 		dbg(`User ${socket.id} has requested to join a room ${data.roomUUID}`);
 
@@ -204,9 +206,18 @@ io.on("connection", (socket) => {
 			roomName: _rooms[idx].name,
 			ownerName: _rooms[idx].owner.name,
 		} as IJoinRoomRes);
+
+		info = {
+			isConnected: true,
+			isOwner: false,
+			uuid: _rooms[idx].uuid,
+			name: _rooms[idx].name,
+		}
 	});
 
+	// client attempting to call someone
 	socket.on("callUser", (data: ICallUserData) => {
+		if (!(info?.isConnected)) return;
 		dbg(`User ${socket.id} is calling ${data.userToCallUUID}`);
 
 		io.to(data.userToCallUUID).emit("userIsCalling", {
@@ -216,7 +227,9 @@ io.on("connection", (socket) => {
 		} as IUserIsCallingData);
 	});
 
+	// for when client decides to pick up a call request they've got
 	socket.on("answerCall", (data: IAnswerCallData) => {
+		if (!(info?.isConnected)) return;
 		dbg(`User ${socket.id} is answering the call from ${data.endpointSocketId}`);
 
 		io.to(data.endpointSocketId).emit("callAccepted", {
@@ -224,31 +237,9 @@ io.on("connection", (socket) => {
 		} as ICallAcceptedData);
 	});
 
-	socket.on("leaveRoom", () => {
-		dbg(`User ${socket.id} left room ${info.uuid}`);
-		info = {
-			isConnected: false,
-			isOwner: false,
-			uuid: "",
-			name: info?.name || "",
-		}
-	});
-
-	socket.on("changeName", (data: IChangeNameData) => {
-		info.name = data.newName;
-		dbg(`User ${socket.id} changed their name`)
-		socket.emit("changeNameRes", {
-			isSuccess: true,
-		} as IChangeNameRes)
-	})
-
-	socket.on("disconnect", () => {
-		dbg(`User ${socket.id} has disconnected`);
-
-		// do not do anything else if user isn't connected to a room
-		if (!(info?.isConnected)) return;
-
-
+	// run when user is leaving room
+	// regardless or when leaving completely or just the room
+	const userLeavingRoomIntrinsics = () => {
 		const idx = getRoomIdx(info.uuid);
 		if (idx === null) return;
 
@@ -294,8 +285,37 @@ io.on("connection", (socket) => {
 		socket.broadcast.emit("userDisconnected", {
 			userSocketId: socket.id,
 		} as IUserDisconnectedData);
+
+		info = {
+			isConnected: false,
+			isOwner: false,
+			uuid: "",
+			name: info?.name || "",
+		}
+	}
+
+	socket.on("leaveRoom", () => {
+		// do not do anything else if user isn't connected to a room
+		if (!(info?.isConnected)) return;
+		dbg(`User ${socket.id} left room ${info.uuid}`);
+		
+		userLeavingRoomIntrinsics();
 	});
 
+	socket.on("disconnect", () => {
+		if (!(info?.isConnected)) return;
+		dbg(`User ${socket.id} has disconnected`);
+		
+		userLeavingRoomIntrinsics();
+	});
+
+	socket.on("changeName", (data: IChangeNameData) => {
+		info.name = data.newName;
+		dbg(`User ${socket.id} changed their name`)
+		socket.emit("changeNameRes", {
+			isSuccess: true,
+		} as IChangeNameRes)
+	});
 });
 
 server.listen(PORT, () => {

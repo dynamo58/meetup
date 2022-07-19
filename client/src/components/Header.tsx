@@ -7,6 +7,7 @@ import {
 	Button,
 	useColorMode,
 	Input,
+	useMediaQuery
 } from "@chakra-ui/react";
 
 import {
@@ -18,39 +19,50 @@ import { SocketContext } from "../Context";
 
 interface IHeaderSectionProps {
 	children?: React.ReactNode,
-}
-
-const HeaderSection: React.FC<IHeaderSectionProps> = (props) => {
-	return (
-		<Flex
-			as="nav"
-			align="center"
-			justify="center"
-			wrap="wrap"
-			gap={5}
-			padding={6}
-			width={"27%"}
-		>
-			{props.children}
-		</Flex>
-	)
+	width?: string | number,
 }
 
 const Header: React.FC = () => {
 	const { colorMode, toggleColorMode } = useColorMode();
-	const { setNameHandler, setModal } = useContext(SocketContext)!;
+	const { setNameHandler, setModal }   = useContext(SocketContext)!;
+	const [isLargerThan1000] = useMediaQuery('(min-width: 1000px)');
+	const [isLargerThan400] = useMediaQuery('(min-width: 400px)');
+
+	const HeaderSection: React.FC<IHeaderSectionProps> = (props: IHeaderSectionProps) => {
+		return (
+			<Flex
+				as="nav"
+				align="center"
+				justify="center"
+				wrap="wrap"
+				gap={2}
+				padding={"4px"}
+				flexDir={isLargerThan400 ? "row" : "column"}
+
+				{...props}
+			>
+				{props.children}
+			</Flex>
+		)
+	}
+
+	const lineStyle = isLargerThan1000 ? {
+		padding: "1em 0.5em 1em 0.5em"
+	} : undefined
 
 	return (
 		<Flex
 			as="nav"
 			width="100%"
 			justify="space-between"
-			maxHeight="3em"
+			flexDir={isLargerThan1000 ? "row" : "column-reverse"}
+			padding={isLargerThan1000 ? undefined : "0.5em"}
+			maxHeight={ isLargerThan1000 ? "3em" : undefined }
 			align="center"
 			fontSize="1.1em"
-			bg={colorMode == "light" ? "bgAlt_lm" : "bgAlt_dm"}
+			bg={ colorMode == "light" ? "bgAlt_lm" : "bgAlt_dm" }
 		>
-			<HeaderSection>
+			<HeaderSection width={"15em"}>
 				<div style={{display: "flex", gap: ".4em"}}>
 					<Input
 						id={"newName"}
@@ -69,11 +81,11 @@ const Header: React.FC = () => {
 				</div>
 			</HeaderSection>
 			<HeaderSection>
-				<Link to="/rooms" style={{ padding: "1em 0.5em 1em 0.5em" }}>ROOMS</Link>
-				<Link to="/" style={{ padding: "1em 0.5em 1em 0.5em" }}>HOME</Link>
-				<a href="https://github.com/dynamo58/meetup" target="_blank" style={{ padding: "1em 0.5em 1em 0.5em" }}>GITHUB</a>
+				<Link to="/rooms" style={lineStyle}>ROOMS</Link>
+				<Link to="/" style={lineStyle}>HOME</Link>
+				<a href="https://github.com/dynamo58/meetup" target="_blank" style={lineStyle}>GITHUB</a>
 			</HeaderSection>
-			<HeaderSection>
+			<HeaderSection width={"15em"}>
 				<Button onClick={toggleColorMode} variant={"secondary"}>
 					{colorMode === "light" ? <MoonIcon /> : <SunIcon />}
 				</Button>

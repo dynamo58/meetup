@@ -26,7 +26,7 @@ const Home: React.FC = () => {
 	}
 
 	useEffect(() => {
-		leaveRoomHandler()
+		leaveRoomHandler();
 	}, [])
 	
 	return (
@@ -36,7 +36,7 @@ const Home: React.FC = () => {
 					src="/favicon.webp"
 					maxW={"10em"}
 					alignSelf="center"
-					marginBottom={"5em"}
+					margin={"1em 0 1em 0"}
 				/>
 				<Text alignSelf={"center"}>
 					Connect to a room
@@ -52,7 +52,7 @@ const Home: React.FC = () => {
 					<Input
 						id="connect-password"
 						type="password"
-						placeholder="Room password"
+						placeholder="Room password (leave blank if none)"
 						variant={"xd"}
 					/><br />
 					<Button
@@ -60,7 +60,7 @@ const Home: React.FC = () => {
 						marginTop={"1em"}
 						variant={"primary"}
 						onClick={() => {
-							const uuid     = (document.getElementById("connect-uuid")! as HTMLInputElement).value;
+							const uuid = (document.getElementById("connect-uuid")! as HTMLInputElement).value;
 							if (uuid === "") {
 								setModal({
 									heading: "Connection failed - input error",

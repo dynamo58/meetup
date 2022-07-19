@@ -174,7 +174,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 			});
 
 			peer.on("stream", (_stream) => {
-				dbg(`Received stream from user ${data.callerSocketId}`);
+				dbg(`Stream from user ${data.callerSocketId}`);
 
 				setRoomInfo((i) => {
 					let foo = i.peers;
@@ -270,7 +270,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 							isOwner: false,
 							peers: foo,
 							isConnected: true,
-							uuid: i.uuid,
+							uuid: roomUUID,
 							ownerName: i.ownerName,
 							roomName: joinRoomData.roomName!
 						}
@@ -365,6 +365,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 	// gets triggered everytime user goes out of the `/room` endpoint 
 	const leaveRoomHandler = () => {
+		if (!roomInfo.isConnected) return;
 		dbg(`Leaving room`);
 
 		// identify the server, which tells all other peers in room
@@ -394,7 +395,6 @@ const ContextProvider = (props: PropsWithChildren) => {
 				updateRoom,
 				initConnection,
 				ownVideoRef,
-				// stream,
 				name,
 				setNameHandler,
 				socketId,
