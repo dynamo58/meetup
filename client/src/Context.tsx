@@ -2,7 +2,7 @@ import React, { createContext, useState, useRef, RefObject, PropsWithChildren, u
 import { io } from "socket.io-client";
 import Peer, { Instance } from "simple-peer";
 
-import { IGetRoomsRes, ISocketConnectRes, IJoinRoomData, IJoinRoomRes, IUserIsCallingData, IAnswerCallData, ICreateRoomData, ICreateRoomRes, IEditRoomRes, ICallUserData, ICallAcceptedData, IEditRoomData, IUserDisconnectedData, IChangeNameData, IChangeNameRes } from "../../shared/shared";
+import { IGetRoomsRes, ISocketConnectRes, IJoinRoomData, IJoinRoomRes, IUserIsCallingData, IAnswerCallData, ICreateRoomData, ICreateRoomRes, IEditRoomRes, ICallUserData, ICallAcceptedData, IEditRoomData, IUserDisconnectedData, IChangeNameData, IChangeNameRes } from "../../shared/socket";
 
 import { ModalControls } from "./components/Modal";
 

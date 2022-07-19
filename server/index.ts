@@ -25,7 +25,7 @@ import {
 	IEditRoomData,
 	IChangeNameData,
 	IChangeNameRes
-} from "../shared/shared";
+} from "../shared/socket";
 
 import {
 	User,

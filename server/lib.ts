@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { UUID } from "../shared/shared";
+import { UUID } from "../shared/socket";
 
 
 interface IUser {
