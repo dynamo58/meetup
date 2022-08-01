@@ -6,26 +6,7 @@ import { Server as SocketIOServer } from "socket.io";
 import cors, { } from "cors";
 import { v4 } from "uuid";
 
-import {
-	ISocketConnectRes,
-	IUserDisconnectedData,
-	ICreateRoomData,
-	ICreateRoomRes,
-	IDeleteRoomRes,
-	IEditRoomRes,
-	IJoinRoomData,
-	IJoinRoomRes,
-	ICallUserData,
-	IUserIsCallingData,
-	IGetRoomsRes,
-	RoomGist,
-	IAnswerCallData,
-	ICallAcceptedData,
-	IRoomEdited,
-	IEditRoomData,
-	IChangeNameData,
-	IChangeNameRes
-} from "../shared/socket";
+import { ISocketConnectRes, IUserDisconnectedData, ICreateRoomData, ICreateRoomRes, IDeleteRoomRes, IEditRoomRes, IJoinRoomData, IJoinRoomRes, ICallUserData, IUserIsCallingData, IGetRoomsRes, RoomGist, IAnswerCallData, ICallAcceptedData, IRoomEdited, IEditRoomData, IChangeNameData, IChangeNameRes } from "../shared/socket";
 
 import {
 	User,
@@ -145,9 +126,14 @@ io.on("connection", (socket) => {
 			isSuccess: true,
 		} as IEditRoomRes);
 
-
-		for (let id of _rooms[idx].getIds().filter(i => i !== socket.id))
-			io.to(id!).emit("roomEdited", { roomName: data.roomName } as IRoomEdited);
+		if (data.roomName !== null) {
+			_rooms[idx]
+				.getIds()
+				.filter(i => i !== socket.id)
+				.forEach(id => {
+					io.to(id).emit("roomEdited", { roomName: data.roomName } as IRoomEdited)
+				})
+		}
 	});
 
 	socket.on("deleteRoom", () => {
@@ -167,8 +153,10 @@ io.on("connection", (socket) => {
 
 		const idx = getRoomIdx(info.uuid)!;
 
-		for (let id of _rooms[idx].getIds().filter(i => i !== socket.id))
-			io.to(id).emit("roomDeleted");
+		_rooms[idx]
+			.getIds()
+			.filter(i => i !== socket.id)
+			.forEach(id => { io.to(id).emit("roomDeleted") })
 
 		_rooms.splice(idx, 1);
 	});
@@ -187,7 +175,8 @@ io.on("connection", (socket) => {
 			return;
 		}
 
-		if (_rooms[idx!]?.password !== data.roomPassword && _rooms[idx!]?.password !== "") {
+		if (_rooms[idx!]?.password !== data.roomPassword &&
+			_rooms[idx!]?.password !== "") {
 			socket.emit("joinRoomRes", {
 				isSuccess: false,
 				errorMesage: "The password provided is incorrect",
@@ -201,7 +190,9 @@ io.on("connection", (socket) => {
 		})
 
 		socket.emit("joinRoomRes", {
-			peerSocketIds: [_rooms[idx].owner.socket.id, ..._rooms[idx].participants.filter((s) => s.socket.id !== socket.id)],
+			peerSocketIds: _rooms[idx]
+				.getIds()
+				.filter((s) => s !== socket.id),
 			isSuccess: true,
 			errorMessage: undefined,
 			roomName: _rooms[idx].name,

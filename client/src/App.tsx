@@ -16,10 +16,10 @@ import Modal from "./components/Modal";
 import { SocketContext } from "./Context";
 
 const App: React.FC = () => {
-  const { initConnection } = useContext(SocketContext)!;
+  const { initVideo } = useContext(SocketContext)!;
 
   useEffect(() => {
-    initConnection();
+    initVideo();
   }, [])
 
   return (

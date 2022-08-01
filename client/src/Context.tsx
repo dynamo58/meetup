@@ -1,37 +1,27 @@
 import React, { createContext, useState, useRef, RefObject, PropsWithChildren, useEffect } from "react";
 import { io } from "socket.io-client";
-import Peer, { Instance } from "simple-peer";
+import Peer from "simple-peer";
 
-import { IGetRoomsRes, ISocketConnectRes, IJoinRoomData, IJoinRoomRes, IUserIsCallingData, IAnswerCallData, ICreateRoomData, ICreateRoomRes, IEditRoomRes, ICallUserData, ICallAcceptedData, IEditRoomData, IUserDisconnectedData, IChangeNameData, IChangeNameRes } from "../../shared/socket";
+import { IGetRoomsRes, ISocketConnectRes, IJoinRoomData, IJoinRoomRes, IUserIsCallingData, IAnswerCallData, ICreateRoomData, ICreateRoomRes, IEditRoomRes, ICallUserData, ICallAcceptedData, IEditRoomData, IUserDisconnectedData, IChangeNameData, IChangeNameRes, IRoomEdited } from "../../shared/socket";
 
 import { ModalControls } from "./components/Modal";
 
-interface VideoParticipant {
-	peer: Instance,
-	stream: MediaStream,
-	name: string | null,
-};
+import { RoomUserSpecifics } from "./lib"
 
-interface RoomUserSpecifics {
-	roomName: string,
-	isConnected: boolean,
-	isOwner: boolean,
-	// is `null` if `isOwner` is `true`
-	ownerName: string | null,
-	peers: Map<string, VideoParticipant>,
-	uuid: string | null,
+export function dbg(a: any) {
+	// if (IS_DEBUG_MODE)
+	console.log(`[${(new Date()).toLocaleTimeString("cs-CZ")}] ${a}`);
 }
 
 interface ISocketContext {
 	ownVideoRef: RefObject<HTMLVideoElement>,
-	// stream: MediaStream | undefined,
 	name: string,
 	setNameHandler: () => void,
 	socketId: string,
 	createRoom: (roomUUID: string, roomPassword: string) => void,
 	joinRoom: (roomUUID: string, roomPassword: string) => void,
 	leaveRoomHandler: () => void,
-	initConnection: () => void,
+	initVideo: () => void,
 	updateRoom: (arg0: IEditRoomData) => void,
 	roomInfo: RoomUserSpecifics,
 	getRooms: () => void,
@@ -39,12 +29,6 @@ interface ISocketContext {
 	modal: ModalControls,
 	setModal: React.Dispatch<React.SetStateAction<ModalControls>>,
 };
-
-const IS_DEBUG_MODE = true;
-function dbg(a: any) {
-	if (IS_DEBUG_MODE)
-		console.log(`[${(new Date()).toLocaleTimeString("cs-CZ")}] ${a}`);
-}
 
 const SocketContext = createContext<ISocketContext | undefined>(undefined);
 const socket = io("http://localhost:3001");
@@ -67,7 +51,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 		roomName: "",
 		isConnected: false,
 		isOwner: false,
-		peers: new Map(),
+		peers: [],
 		uuid: null,
 		ownerName: null,
 	});
@@ -121,7 +105,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 			dbg(`Name changed to ${newName}`)
 			setName(newName);
 			localStorage.setItem("name", newName);
-		})
+		});
 	}
 
 	useEffect(() => {
@@ -130,26 +114,6 @@ const ContextProvider = (props: PropsWithChildren) => {
 			setName(recoveredName);
 			(document.getElementById("newName")! as HTMLInputElement).value = recoveredName;
 		}
-	}, [])
-
-	const initConnection = () => {
-		getStream()
-			.then((st) => {
-				if (st === null) {
-					setModal({
-						heading: "No webcam or microphone detected",
-						text: "Those two components are required for participation in calls",
-						isVisible: true,
-					});
-					return;
-				}
-
-				dbg(`Got stream from webcam and microphone`);
-				setMyStream(st!);
-				window.addEventListener("videoInit", () => {
-					ownVideoRef.current!.srcObject = st;
-				})
-			});
 
 		socket.on("connectionRes", (data: ISocketConnectRes) => {
 			dbg(`Connected to server with socket.io`);
@@ -177,44 +141,62 @@ const ContextProvider = (props: PropsWithChildren) => {
 			peer.on("stream", (_stream) => {
 				dbg(`Stream from user ${data.callerSocketId}`);
 
-				setRoomInfo((i) => {
-					let foo = i.peers;
-					foo.set(data.callerSocketId, {
+				setRoomInfo((i) => ({
+					isOwner: i.isOwner,
+					peers: [...i.peers, {
 						name: data.callerName,
 						stream: _stream,
 						peer,
-					});
-
-					return {
-						isOwner: i.isOwner,
-						peers: foo,
-						isConnected: i.isConnected,
-						uuid: i.uuid,
-						ownerName: i.ownerName,
-						roomName: i.roomName
-					}
-				})
+						socketId: data.callerSocketId
+					}],
+					isConnected: i.isConnected,
+					uuid: i.uuid,
+					ownerName: i.ownerName,
+					roomName: i.roomName
+				}))
 			});
 			peer.signal(data.signalData);
 		});
 
 		socket.on("promotedToOwner", () => {
-			setRoomInfo((i) => {
-				return {
-					isOwner: true,
-					peers: i.peers,
-					isConnected: true,
-					uuid: i.uuid,
-					ownerName: i.ownerName,
-					roomName: i.roomName
-				}
-
-			})
+			setRoomInfo((i) => ({
+				...i,
+				isOwner: true,
+			}));
 		});
 
 		socket.on("userDisconnected", (data: IUserDisconnectedData) => {
 
-		})
+		});
+
+		const roomEditedHandler = (data: IRoomEdited) => {
+			setRoomInfo((i) => ({
+				...i,
+				roomName: data.roomName,
+			}));
+			// setRoomName(data.roomName);
+		}
+		socket.on("roomEdited", (data: IRoomEdited) => roomEditedHandler(data));
+	}, [])
+
+	const initVideo = () => {
+		getStream()
+			.then((st) => {
+				if (st === null) {
+					setModal({
+						heading: "No webcam or microphone detected",
+						text: "Those two components are required for participation in calls",
+						isVisible: true,
+					});
+					return;
+				}
+
+				dbg(`Got stream from webcam and microphone`);
+				setMyStream(st!);
+				window.addEventListener("videoInit", () => {
+					ownVideoRef.current!.srcObject = st;
+				})
+			});
 	}
 
 	const joinRoom = (roomUUID: string, roomPassword: string) => {
@@ -259,23 +241,19 @@ const ContextProvider = (props: PropsWithChildren) => {
 				peer.on("stream", (_stream) => {
 					dbg(`Stream received from  ${id}`);
 
-					setRoomInfo((i) => {
-						let foo = i.peers;
-						foo.set(id, {
+					setRoomInfo((i) => ({
+						isOwner: false,
+						peers: [...i.peers, {
 							name: "xd",
 							stream: _stream,
 							peer,
-						});
-
-						return {
-							isOwner: false,
-							peers: foo,
-							isConnected: true,
-							uuid: roomUUID,
-							ownerName: i.ownerName,
-							roomName: joinRoomData.roomName!
-						}
-					});
+							socketId: id,
+						}],
+						isConnected: true,
+						uuid: roomUUID,
+						ownerName: joinRoomData.ownerName!,
+						roomName: joinRoomData.roomName!
+					}));
 				});
 
 				socket.on("callAccepted", (data: ICallAcceptedData) => {
@@ -307,20 +285,18 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			dbg(`Successfully created room ${roomName}, uuid ${data.roomUuid}`);
 
-			setRoomInfo((i) => {
-				return {
-					isOwner: true,
-					peers: i.peers,
-					isConnected: true,
-					uuid: data.roomUuid!,
-					ownerName: i.ownerName,
-					roomName,
-				}
-			})
+			setRoomInfo((i) => ({
+				isOwner: true,
+				peers: i.peers,
+				isConnected: true,
+				uuid: data.roomUuid!,
+				ownerName: name,
+				roomName,
+			}));
 		});
 	}
 
-	// update the information about the current room
+	// update the current room
 	const updateRoom = (arg0: IEditRoomData) => {
 		dbg(`Attempting to update room ${name}`);
 
@@ -337,18 +313,10 @@ const ContextProvider = (props: PropsWithChildren) => {
 			}
 
 			dbg(`Room ${roomInfo.roomName} successfully edited`);
-
-			setRoomInfo((i) => {
-				return {
-					name,
-					isOwner: i.isOwner, // should be true anyway if the edit succeeded
-					peers: i.peers,
-					isConnected: i.isConnected,
-					uuid: i.uuid,
-					ownerName: i.ownerName,
-					roomName: i.roomName
-				}
-			})
+			setRoomInfo((i) => ({
+				...i,
+				roomName: arg0.roomName!,
+			}));
 		})
 	}
 
@@ -373,18 +341,18 @@ const ContextProvider = (props: PropsWithChildren) => {
 		socket.emit("leaveRoom");
 
 		// clean up
-		Array.from(roomInfo.peers).forEach(p => {
-			p[1].peer.destroy();
+		roomInfo.peers.forEach(p => {
+			p.peer.destroy();
 		});
 
-		setRoomInfo({
+		setRoomInfo(_ => ({
 			roomName: "",
 			isConnected: false,
 			isOwner: false,
-			peers: new Map(),
+			peers: [],
 			uuid: null,
 			ownerName: null,
-		});
+		}));
 	};
 
 	return (
@@ -394,7 +362,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 			rooms,
 			getRooms,
 			updateRoom,
-			initConnection,
+			initVideo,
 			ownVideoRef,
 			name,
 			setNameHandler,
@@ -402,7 +370,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 			leaveRoomHandler,
 			joinRoom,
 			createRoom,
-			roomInfo
+			roomInfo,
 		}}
 		>
 			{props.children}

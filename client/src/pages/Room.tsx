@@ -7,6 +7,10 @@ import {
 import { SocketContext } from "../Context";
 import RoomSettings from "../components/RoomSettings";
 
+const videoStyles = {
+	padding: "1rem",
+};
+
 const Room: React.FC = () => {
 	let { ownVideoRef, roomInfo } = useContext(SocketContext)!;
 
@@ -16,7 +20,7 @@ const Room: React.FC = () => {
 
 	useEffect(() => {
 		Array.from(roomInfo.peers).forEach((p) => {
-			(document.getElementById(p[0])! as HTMLVideoElement).srcObject = p[1].stream;
+			(document.getElementById(p.socketId)! as HTMLVideoElement).srcObject = p.stream;
 		})
 	}, [roomInfo]);
 
@@ -42,32 +46,37 @@ const Room: React.FC = () => {
 				height="100%"
 				direction="column"
 			>
-				<>
-					<div>
+				<div
+					style={{
+						margin: "0 auto",
+						display: "grid",
+						gap: "1rem",
+						gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+					}}
+				>
+					<div style={videoStyles}>
 						<p>You</p>
 						<video
 							ref={ownVideoRef}
 							autoPlay
 							muted={true}
-							style={{ maxWidth: "20em", borderRadius: "1em" }}
 						/>
 					</div>
 
 					{
 						Array.from(roomInfo.peers).map((p) =>
-							<div key={p[0]}>
-								<p>{p[1].name}</p>
+							<div key={p.socketId} style={videoStyles}>
+								<p>{p.name}</p>
 								<video
-									id={p[0]}
+									id={p.socketId}
 									muted={false}
 									autoPlay={true}
 									controls={true}
-									style={{ maxWidth: "20em", borderRadius: "1em" }}
 								/>
 							</div>
 						)
 					}
-				</>
+				</div>
 			</Stack>
 		</Stack>
 	)
