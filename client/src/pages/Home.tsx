@@ -10,17 +10,17 @@ import {
 } from '@chakra-ui/react'
 
 import {
-	SocketContext
+	Context
 } from "../Context";
 import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
-	let { joinRoom, createRoom, setModal, leaveRoomHandler } = useContext(SocketContext)!;
+	let { joinRoom, createRoom, setModal, leaveRoomHandler } = useContext(Context)!;
 
 	const navigate = useNavigate();
 
 	function navigate_promise() {
-		return new Promise(function (resolve, reject) {
+		return new Promise(function (resolve,) {
 			resolve(navigate("/room", { replace: true }))
 		})
 	}

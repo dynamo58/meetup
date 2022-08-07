@@ -5,31 +5,31 @@ import { UUID } from "../shared/socket";
 interface IUser {
 	name: string,
 	socket: Socket,
+	isOwner: boolean,
 }
 
 export class User implements IUser {
 	name: string;
 	socket: Socket;
+	isOwner: boolean;
 
-	constructor(name: string, socket: Socket) {
+	constructor(name: string, socket: Socket, isOwner: boolean) {
 		this.name = name;
 		this.socket = socket;
+		this.isOwner = isOwner;
 	}
 }
-
 
 interface IRoom {
 	uuid: string,
 	name: string,
 	password: string,
-	owner: User,
 	participants: User[],
 }
 
 export class Room implements IRoom {
 	participants: User[];
 	uuid: string;
-	owner: User;
 	name: string;
 	password: string;
 
@@ -37,15 +37,13 @@ export class Room implements IRoom {
 		this.uuid = uuid;
 		this.name = name;
 		this.password = password;
-		this.owner = owner;
-		this.participants = [];
+		this.participants = [owner];
 	}
 
 	getIds(): string[] {
-		return [this.owner.socket.id, ...this.participants.map((p) => p.socket.id)];
+		return this.participants.map((p) => p.socket.id);
 	};
 }
-
 
 export interface UserRoomLookup {
 	isConnected: boolean,

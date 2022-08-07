@@ -16,3 +16,12 @@ export interface RoomUserSpecifics {
 	peers: VideoParticipant[],
 	uuid: string | null,
 }
+
+export function getTimestampStr(): string {
+	const date = new Date();
+	return `[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}]`
+}
+
+export function dbg(a: any) {
+	console.log(`[${(new Date()).toLocaleTimeString("cs-CZ")}] ${a}`);
+}

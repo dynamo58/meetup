@@ -4,15 +4,17 @@ import {
 	Divider,
 } from "@chakra-ui/react";
 
-import { SocketContext } from "../Context";
+import { Context } from "../Context";
 import RoomSettings from "../components/RoomSettings";
+import RoomActivityLog from "../components/RoomActivityLog";
+
 
 const videoStyles = {
 	padding: "1rem",
 };
 
 const Room: React.FC = () => {
-	let { ownVideoRef, roomInfo } = useContext(SocketContext)!;
+	let { ownVideoRef, roomInfo } = useContext(Context)!;
 
 	useEffect(() => {
 		window.dispatchEvent(new Event("videoInit"));
@@ -37,6 +39,8 @@ const Room: React.FC = () => {
 				height="100%"
 			>
 				<RoomSettings />
+				<br /><br /><br />
+				<RoomActivityLog />
 			</Stack>
 
 			<Divider orientation='vertical' />
@@ -64,7 +68,7 @@ const Room: React.FC = () => {
 					</div>
 
 					{
-						Array.from(roomInfo.peers).map((p) =>
+						roomInfo.peers.map((p) =>
 							<div key={p.socketId} style={videoStyles}>
 								<p>{p.name}</p>
 								<video

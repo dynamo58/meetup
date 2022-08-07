@@ -7,7 +7,7 @@ import {
 	Center,
 } from "@chakra-ui/react";
 
-import { SocketContext } from "../Context";
+import { Context } from "../Context";
 
 export interface ModalControls {
 	heading: string,
@@ -16,7 +16,7 @@ export interface ModalControls {
 }
 
 const Modal: React.FC = () => {
-	const { modal, setModal } = useContext(SocketContext)!;
+	const { modal, setModal } = useContext(Context)!;
 
 	return (
 		<div style={{ textAlign: "center", position: "fixed", zIndex: 1, left: 0, top: 0, width: "100%", height: "100%", overflow: "auto", backgroundColor: "#00000055", display: `${modal.isVisible ? "flex" : "none"}`, justifyContent: "center", flexDirection: "column" }}>

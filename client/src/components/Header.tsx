@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -14,7 +14,8 @@ import {
 	SunIcon
 } from "@chakra-ui/icons";
 
-import { SocketContext } from "../Context";
+import { Context } from "../Context";
+import { dbg } from "../lib";
 
 interface IHeaderSectionProps {
 	children?: React.ReactNode,
@@ -22,9 +23,20 @@ interface IHeaderSectionProps {
 	justify?: string,
 }
 
+const tryRecoverName = (): string | null => {
+	const recoveredName = localStorage.getItem("name");
+	if (recoveredName) {
+		dbg(`Recovered name ${recoveredName} from localStorage`);
+		return recoveredName;
+	}
+	return null;
+}
+
+
 const Header: React.FC = () => {
+	const [newName, setNewName] = useState<string>("");
 	const { colorMode, toggleColorMode } = useColorMode();
-	const { setNameHandler } = useContext(SocketContext)!;
+	const { setNameHandler, name, setName } = useContext(Context)!;
 	const [isLargerThan1000] = useMediaQuery('(min-width: 1000px)');
 	const [isLargerThan400] = useMediaQuery('(min-width: 400px)');
 
@@ -38,7 +50,6 @@ const Header: React.FC = () => {
 				gap={2}
 				padding={"4px"}
 				flexDir={isLargerThan400 ? "row" : "column"}
-
 				{...props}
 			>
 				{props.children}
@@ -48,7 +59,7 @@ const Header: React.FC = () => {
 
 	const lineStyle = isLargerThan1000 ? {
 		padding: "1em 0.5em 1em 0.5em"
-	} : undefined
+	} : undefined;
 
 	return (
 		<Flex
@@ -68,13 +79,15 @@ const Header: React.FC = () => {
 						id={"newName"}
 						placeholder={"New name"}
 						variant={"secondary"}
+						value={newName}
+						onChange={(e) => setNewName(e.target.value)}
 					/>
 					<Button
 						id={"newNameButton"}
 						textAlign={"center"}
 						variant={"primary"}
 						style={{ padding: "0 .75em 0 .75em" }}
-						onClick={setNameHandler}
+						onClick={() => setNameHandler(newName)}
 					>Change</Button>
 				</div>
 			</HeaderSection>

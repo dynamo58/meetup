@@ -3,20 +3,14 @@ import { io } from "socket.io-client";
 import Peer from "simple-peer";
 
 import { IGetRoomsRes, ISocketConnectRes, IJoinRoomData, IJoinRoomRes, IUserIsCallingData, IAnswerCallData, ICreateRoomData, ICreateRoomRes, IEditRoomRes, ICallUserData, ICallAcceptedData, IEditRoomData, IUserDisconnectedData, IChangeNameData, IChangeNameRes, IRoomEdited } from "../../shared/socket";
-
 import { ModalControls } from "./components/Modal";
+import { RoomUserSpecifics, getTimestampStr, dbg } from "./lib"
 
-import { RoomUserSpecifics } from "./lib"
 
-export function dbg(a: any) {
-	// if (IS_DEBUG_MODE)
-	console.log(`[${(new Date()).toLocaleTimeString("cs-CZ")}] ${a}`);
-}
-
-interface ISocketContext {
+interface IContext {
 	ownVideoRef: RefObject<HTMLVideoElement>,
 	name: string,
-	setNameHandler: () => void,
+	setNameHandler: (n: string) => void,
 	socketId: string,
 	createRoom: (roomUUID: string, roomPassword: string) => void,
 	joinRoom: (roomUUID: string, roomPassword: string) => void,
@@ -28,16 +22,23 @@ interface ISocketContext {
 	rooms: IGetRoomsRes | null,
 	modal: ModalControls,
 	setModal: React.Dispatch<React.SetStateAction<ModalControls>>,
+	roomActivityLog: string[],
+	setName: React.Dispatch<React.SetStateAction<string>>,
 };
 
-const SocketContext = createContext<ISocketContext | undefined>(undefined);
+const Context = createContext<IContext | null>(null);
 const socket = io("http://localhost:3001");
-
 
 const ContextProvider = (props: PropsWithChildren) => {
 	let [myStream, setMyStream] = useState<MediaStream>();
 	const [socketId, setSocketId] = useState("");
 	const [name, setName] = useState("");
+	const [roomActivityLog, setRoomActivityLog] = useState<string[]>([]);
+	// setRoomActivityLog wrapper
+	const sralW = (act: string) => {
+		setRoomActivityLog(i => ([`${getTimestampStr()} ${act}`, ...i]));
+	}
+
 
 	const [modal, setModal] = useState<ModalControls>({
 		heading: "",
@@ -74,10 +75,8 @@ const ContextProvider = (props: PropsWithChildren) => {
 		return t;
 	}
 
-	const setNameHandler = () => {
-		const newName = (document.getElementById("newName")! as HTMLInputElement).value;
-
-		if (newName === "") {
+	const setNameHandler = (s: string) => {
+		if (s === "") {
 			setModal({
 				heading: "Error changing name",
 				text: "You must set a valid name!",
@@ -87,12 +86,10 @@ const ContextProvider = (props: PropsWithChildren) => {
 		}
 
 		socket.emit("changeName", {
-			newName,
+			newName: s,
 		} as IChangeNameData)
 
 		socket.on("changeNameRes", (data: IChangeNameRes) => {
-			dbg(`Received name change response`);
-
 			if (!data.isSuccess) {
 				setModal({
 					heading: "Error changing name",
@@ -102,19 +99,14 @@ const ContextProvider = (props: PropsWithChildren) => {
 				return;
 			}
 
-			dbg(`Name changed to ${newName}`)
-			setName(newName);
-			localStorage.setItem("name", newName);
+			dbg(`Name changed to ${s}`);
+			sralW(`Name changed to ${s}`);
+			setName(s);
+			localStorage.setItem("name", s);
 		});
 	}
 
 	useEffect(() => {
-		const recoveredName = localStorage.getItem("name");
-		if (recoveredName) {
-			setName(recoveredName);
-			(document.getElementById("newName")! as HTMLInputElement).value = recoveredName;
-		}
-
 		socket.on("connectionRes", (data: ISocketConnectRes) => {
 			dbg(`Connected to server with socket.io`);
 			setSocketId(data.socketId);
@@ -126,7 +118,9 @@ const ContextProvider = (props: PropsWithChildren) => {
 			const peer = new Peer({
 				initiator: false,
 				trickle: false,
-				stream: myStream || (await getStream()) || myStream,
+				// for some reason the stream goes null,
+				// i dont exactly know why
+				stream: myStream || (await getStream())!,
 			});
 
 			peer.on("signal", (signalData) => {
@@ -140,19 +134,16 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 			peer.on("stream", (_stream) => {
 				dbg(`Stream from user ${data.callerSocketId}`);
+				sralW(`Connected with user ${data.callerName}`)
 
 				setRoomInfo((i) => ({
-					isOwner: i.isOwner,
+					...i,
 					peers: [...i.peers, {
 						name: data.callerName,
 						stream: _stream,
 						peer,
 						socketId: data.callerSocketId
 					}],
-					isConnected: i.isConnected,
-					uuid: i.uuid,
-					ownerName: i.ownerName,
-					roomName: i.roomName
 				}))
 			});
 			peer.signal(data.signalData);
@@ -163,10 +154,15 @@ const ContextProvider = (props: PropsWithChildren) => {
 				...i,
 				isOwner: true,
 			}));
+			sralW("You were promoted to be the rooms owner.");
 		});
 
 		socket.on("userDisconnected", (data: IUserDisconnectedData) => {
-
+			setRoomInfo(i => ({
+				...i,
+				peers: i.peers.filter(p => p.socketId !== data.userSocketId)
+			}));
+			sralW(`User ${data.userName} disconnected`)
 		});
 
 		const roomEditedHandler = (data: IRoomEdited) => {
@@ -174,7 +170,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 				...i,
 				roomName: data.roomName,
 			}));
-			// setRoomName(data.roomName);
+			sralW(`Room was edited by owner`)
 		}
 		socket.on("roomEdited", (data: IRoomEdited) => roomEditedHandler(data));
 	}, [])
@@ -218,10 +214,12 @@ const ContextProvider = (props: PropsWithChildren) => {
 				return;
 			}
 
+			sralW(`Joined room ${joinRoomData.roomName}`);
 			dbg(`Successfully joined room ${roomUUID}`);
 
-			for (const id of joinRoomData.peerSocketIds!) {
-				dbg(`Attempting to call ${id}`);
+			console.log(joinRoomData.peerSocketIds!);
+			for (const { peerSocketId, peerName } of joinRoomData.peerSocketIds!) {
+				dbg(`Attempting to call ${peerSocketId}`);
 
 
 				const peer = new Peer({
@@ -232,14 +230,15 @@ const ContextProvider = (props: PropsWithChildren) => {
 
 				peer.on("signal", (data) => {
 					socket.emit("callUser", {
-						userToCallUUID: id,
+						userToCallUUID: peerSocketId,
 						signalData: data,
 						name
 					} as ICallUserData);
 				});
 
 				peer.on("stream", (_stream) => {
-					dbg(`Stream received from  ${id}`);
+					dbg(`Stream received from  ${peerSocketId}`);
+					sralW(`Connected with user ${peerName}`);
 
 					setRoomInfo((i) => ({
 						isOwner: false,
@@ -247,7 +246,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 							name: "xd",
 							stream: _stream,
 							peer,
-							socketId: id,
+							socketId: peerSocketId,
 						}],
 						isConnected: true,
 						uuid: roomUUID,
@@ -257,7 +256,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 				});
 
 				socket.on("callAccepted", (data: ICallAcceptedData) => {
-					dbg(`${id} accepted call`);
+					dbg(`${peerSocketId} accepted call`);
 					peer.signal(data.signalData);
 				});
 			}
@@ -273,7 +272,6 @@ const ContextProvider = (props: PropsWithChildren) => {
 		} as ICreateRoomData);
 
 		socket.on("createRoomRes", (data: ICreateRoomRes) => {
-
 			if (!data.isSuccess) {
 				setModal({
 					heading: "Error creating room",
@@ -284,6 +282,7 @@ const ContextProvider = (props: PropsWithChildren) => {
 			}
 
 			dbg(`Successfully created room ${roomName}, uuid ${data.roomUuid}`);
+			sralW(`Room ${roomName} created`);
 
 			setRoomInfo((i) => ({
 				isOwner: true,
@@ -356,7 +355,8 @@ const ContextProvider = (props: PropsWithChildren) => {
 	};
 
 	return (
-		<SocketContext.Provider value={{
+		<Context.Provider value={{
+			setName,
 			setModal,
 			modal,
 			rooms,
@@ -371,12 +371,13 @@ const ContextProvider = (props: PropsWithChildren) => {
 			joinRoom,
 			createRoom,
 			roomInfo,
+			roomActivityLog,
 		}}
 		>
 			{props.children}
-		</SocketContext.Provider>
+		</Context.Provider>
 	);
 };
 
-export { ContextProvider, SocketContext };
-export type { ISocketContext };
+export { ContextProvider, Context };
+export type { IContext };

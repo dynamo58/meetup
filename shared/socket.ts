@@ -42,10 +42,15 @@ export interface IJoinRoomData {
 	nickname: string,
 };
 
+export interface UserGist {
+	peerName: string,
+	peerSocketId: string,
+}
+
 export interface IJoinRoomRes {
 	isSuccess: boolean,
 	errorMessage?: string,
-	peerSocketIds?: string[],
+	peerSocketIds?: UserGist[],
 	roomName?: string,
 	ownerName?: string,
 };

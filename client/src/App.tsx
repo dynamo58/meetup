@@ -13,10 +13,10 @@ import RoomSelector from "./pages/RoomSelector";
 
 import Modal from "./components/Modal";
 
-import { SocketContext } from "./Context";
+import { Context } from "./Context";
 
 const App: React.FC = () => {
-  const { initVideo } = useContext(SocketContext)!;
+  const { initVideo } = useContext(Context)!;
 
   useEffect(() => {
     initVideo();

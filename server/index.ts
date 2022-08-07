@@ -6,7 +6,7 @@ import { Server as SocketIOServer } from "socket.io";
 import cors, { } from "cors";
 import { v4 } from "uuid";
 
-import { ISocketConnectRes, IUserDisconnectedData, ICreateRoomData, ICreateRoomRes, IDeleteRoomRes, IEditRoomRes, IJoinRoomData, IJoinRoomRes, ICallUserData, IUserIsCallingData, IGetRoomsRes, RoomGist, IAnswerCallData, ICallAcceptedData, IRoomEdited, IEditRoomData, IChangeNameData, IChangeNameRes } from "../shared/socket";
+import { ISocketConnectRes, IUserDisconnectedData, ICreateRoomData, ICreateRoomRes, IDeleteRoomRes, IEditRoomRes, IJoinRoomData, IJoinRoomRes, ICallUserData, IUserIsCallingData, IGetRoomsRes, RoomGist, IAnswerCallData, ICallAcceptedData, IRoomEdited, IEditRoomData, IChangeNameData, IChangeNameRes, UserGist } from "../shared/socket";
 
 import {
 	User,
@@ -83,7 +83,7 @@ io.on("connection", (socket) => {
 		dbg(`User ${socket.id} has requested to make a room`);
 
 		const _uuid = v4();
-		const r = new Room(_uuid, data.roomName, data.roomPassword, new User(data.name, socket));
+		const r = new Room(_uuid, data.roomName, data.roomPassword, new User(data.name, socket, true));
 		_rooms.push(r);
 
 		info = {
@@ -187,16 +187,20 @@ io.on("connection", (socket) => {
 		_rooms[idx].participants.push({
 			socket,
 			name: data.nickname,
+			isOwner: false,
 		})
 
 		socket.emit("joinRoomRes", {
-			peerSocketIds: _rooms[idx]
-				.getIds()
-				.filter((s) => s !== socket.id),
+			peerSocketIds: _rooms[idx].participants
+				.map((p) => ({
+					peerName: p.name,
+					peerSocketId: p.socket.id,
+				} as UserGist))
+				.filter(s => s.peerSocketId !== socket.id),
 			isSuccess: true,
 			errorMessage: undefined,
 			roomName: _rooms[idx].name,
-			ownerName: _rooms[idx].owner.name,
+			ownerName: _rooms[idx].participants.filter(p => p.isOwner == true)[0].name,
 		} as IJoinRoomRes);
 
 		info = {
@@ -236,25 +240,32 @@ io.on("connection", (socket) => {
 		if (idx === null) return;
 
 		// if there is no one remaining in the room, destroy it 
-		if (_rooms[idx].participants.length == 0 && info.isOwner) {
+		if (_rooms[idx].participants.length == 1) {
 			_rooms.splice(idx, 1);
-			return
+			return;
 		}
 
 		// if there is still someone in the room and user was the owner,
 		// transfer owner to them (if there is multiple people, choose one at random)
-		if (_rooms[idx].participants.length > 0 && info.isOwner) {
+		if (_rooms[idx].participants.length > 1 && info.isOwner) {
 			let chosenIdx = Math.floor(Math.random() * _rooms[idx].participants.length);
 			let chosenSocketId = _rooms[idx].participants[chosenIdx].socket.id;
 
-			_rooms[idx].owner = _rooms[idx].participants[chosenIdx],
-				_rooms[idx].participants = _rooms[idx].participants.filter((p) => p.socket.id !== chosenSocketId),
+			_rooms[idx].participants = _rooms[idx].participants
+				.map((p, idx) => {
+					if (idx == chosenIdx)
+						return { ...p, isOwner: true }
+					return p;
+				}),
 
-				_rooms[idx].getIds()
+				// notify all of the users apart from the one who left
+				// and the leader that the owner has changed
+				_rooms[idx]
+					.getIds()
 					.filter(i => i !== socket.id && i !== chosenSocketId)
 					.forEach((id) => {
 						io.to(id).emit("changedOwner", {
-							newOwnerName: _rooms[idx!].participants[chosenIdx].name,
+							newOwnerName: _rooms[idx].participants[chosenIdx].name,
 							newOwnerSocketId: chosenSocketId
 						});
 					})
@@ -268,15 +279,14 @@ io.on("connection", (socket) => {
 		_rooms[idx].participants = _rooms[idx].participants.filter(p => p.socket.id !== socket.id)
 
 		// notify other users in room
-		for (let id of Array.from(_rooms[idx].getIds().filter((i) => i !== socket.id)))
+		const otherUsersIds = _rooms[idx]
+			.getIds()
+			.filter((i) => i !== socket.id)
+		for (let id of otherUsersIds)
 			io.to(id).emit("userDisconnected", {
 				userName: info.name,
 				userSocketId: socket.id
 			} as IUserDisconnectedData);
-
-		socket.broadcast.emit("userDisconnected", {
-			userSocketId: socket.id,
-		} as IUserDisconnectedData);
 
 		info = {
 			isConnected: false,

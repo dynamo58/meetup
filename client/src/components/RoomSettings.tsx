@@ -11,17 +11,19 @@ import {
 	Input,
 	Button,
 	useClipboard,
+	useColorMode,
 } from '@chakra-ui/react'
 
-import { SocketContext } from "../Context";
+import { Context } from "../Context";
 
 interface IRoomSettings {
 	ownerName?: string,
 }
 
 const RoomSettings: React.FC<IRoomSettings> = (props) => {
-	let { updateRoom, roomInfo } = useContext(SocketContext)!;
+	let { updateRoom, roomInfo } = useContext(Context)!;
 	const { hasCopied, onCopy } = useClipboard(roomInfo.uuid!);
+	const { colorMode } = useColorMode();
 
 	const updateRoomName = () => {
 		const name = (document.getElementById("current-name")! as HTMLInputElement).value;
@@ -37,20 +39,22 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 	}
 
 	return (
-		<Stack direction="column" maxW="30em" borderRadius="5px">
+		<Stack direction="column" maxW="30em" bg={colorMode === "light" ? "bgAlt_lm" : "bgAlt_dm"}>
 			<Text fontWeight={800} width="100%" textAlign="center">Room settings</Text>
 			<TableContainer>
 				<Table variant='simple'>
 					<Tbody>
 						<Tr>
-							<Td>Owner</Td>
-							<Td>You</Td>
+							<Td w={"50%"} padding={0}>Owner</Td>
+							<Td w={"50%"} padding={0}>You</Td>
 						</Tr>
 						<Tr>
-							<Td>UUID (click to copy)</Td>
+							<Td padding={0} w={"50%"}>UUID (click to copy)</Td>
 							<Td
 								onClick={onCopy}
 								cursor={"pointer"}
+								padding={0}
+								w={"50%"}
 							>
 								<Text
 									maxW={"10em"}
@@ -63,8 +67,8 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 							</Td>
 						</Tr>
 						<Tr>
-							<Td>Room name</Td>
-							<Td>
+							<Td padding={0} w={"50%"}>Room name</Td>
+							<Td padding={0} w={"50%"}>
 								{roomInfo.isOwner ? (<>
 									<Input
 										id="current-name"
@@ -81,10 +85,10 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 										width={"100%"}
 										onClick={updateRoomName}
 										style={{
-											borderTopLeftRadius: 0,
-											borderTopRightRadius: 0,
-											maxHeight: "1.75em"
+											maxHeight: "1.75em",
+											borderRadius: 0,
 										}}
+										variant={"primary"}
 									>Apply
 									</Button></>) : roomInfo.roomName
 								}
@@ -92,8 +96,8 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 						</Tr>
 						{roomInfo.isOwner && (<>
 							<Tr>
-								<Td>Room password</Td>
-								<Td>
+								<Td padding={0} w={"50%"}>Room password</Td>
+								<Td padding={0} w={"50%"}>
 									<Input
 										id="current-password"
 										isDisabled={!roomInfo.isOwner}
@@ -110,10 +114,10 @@ const RoomSettings: React.FC<IRoomSettings> = (props) => {
 										width={"100%"}
 										onClick={updateRoomPassword}
 										style={{
-											borderTopLeftRadius: 0,
-											borderTopRightRadius: 0,
+											borderRadius: 0,
 											maxHeight: "1.75em"
 										}}
+										variant={"primary"}
 									>
 										Apply
 									</Button>

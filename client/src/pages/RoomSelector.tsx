@@ -7,10 +7,10 @@ import {
 	Button,
 	Input,
 } from "@chakra-ui/react";
-import { SocketContext } from "../Context";
+import { Context } from "../Context";
 
 const Room: React.FC = () => {
-	let { getRooms, rooms, joinRoom, leaveRoomHandler } = useContext(SocketContext)!;
+	let { getRooms, rooms, joinRoom, leaveRoomHandler } = useContext(Context)!;
 
 	useEffect(() => {
 		leaveRoomHandler();
